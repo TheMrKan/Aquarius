@@ -19,7 +19,6 @@ class MQTTManager:
     connected = False
     trying = 2
 
-
     def send(self, topic, data):
         if self.client == None:
             return
@@ -81,7 +80,6 @@ class MQTTManager:
             port = int(port)
             m = MQTTManager(host, port, user, password, prefix)
             s = m.connect()
-            print(host, port, user, password, prefix, s)
             return m if s else None
         #except:
             #return None

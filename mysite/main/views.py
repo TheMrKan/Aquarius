@@ -32,11 +32,13 @@ def index(request):
     if request.method == "POST":
         values = request.POST.dict()
         if all(k in values.keys() for k in ("server", "port", "user", "password", "prefix")):
-            print({k: values[k] for k in ["cname", "email"] if k in values.keys()})
-            if ControllerV2Manager.add(values["user"], values["password"],
-                                       host=values["server"], port=int(values["port"]), prefix=values["prefix"],
-                                       **{k: values[k] for k in ["cname", "email"] if k in values.keys()}):
-                saved_controllers.append([values["user"], values["password"]])
+
+            if not [True for c in saved_controllers if c[0] == values["user"]]:    # исключаем возможность повторного добавления одного и того-же контроллера
+                print({k: values[k] for k in ["cname", "email"] if k in values.keys()})
+                if ControllerV2Manager.add(values["user"], values["password"],
+                                           host=values["server"], port=int(values["port"]), prefix=values["prefix"],
+                                           **{k: values[k] for k in ["cname", "email"] if k in values.keys()}):
+                    saved_controllers.append([values["user"], values["password"]])
     controllers = []
     _remove = []
     for c in saved_controllers:
@@ -219,6 +221,8 @@ def controller(request, mqtt_user):
     hide_channels_selector: bool = cont.version < 200
     hidden_channel: str = "" if hide_channels_selector and not instance.get_pump_state() \
         else str(instance.pump_channel_number)
+    if not hide_channels_selector:
+        hidden_channel = ""
 
     class Line:
         def __init__(self, name, status, data):
