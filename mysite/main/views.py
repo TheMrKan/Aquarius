@@ -218,7 +218,10 @@ def controller(request, mqtt_user):
     channels = Channel.objects.filter(controller__mqtt_user=mqtt_user)
     cont = Controller.objects.get(mqtt_user=mqtt_user)
 
-    hide_channels_selector: bool = cont.version < 200
+    if cont.version < 200:
+        hide_channels_selector = True
+        if instance.get_pump_state():
+            hide_channels_selector
     hidden_channel: str = "" if hide_channels_selector and not instance.get_pump_state() \
         else str(instance.pump_channel_number)
     if not hide_channels_selector:
