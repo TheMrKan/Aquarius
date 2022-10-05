@@ -47,7 +47,7 @@ def index(request):
         else:
             _remove.append(c)
     [saved_controllers.remove(c) for c in _remove]
-    response = render(request, 'main/index.html',
+    response = render(request, 'index.html',
                     {
                         'controllers': controllers
                     })
@@ -58,7 +58,7 @@ def index(request):
 
 @login_required
 def reports(request):
-    return render(request, 'main/reports.html')
+    return render(request, 'reports.html')
 
 @login_required
 def pause(request, mqtt_user, minutes: int = -1):
@@ -76,7 +76,7 @@ def pause(request, mqtt_user, minutes: int = -1):
         return redirect("controller", mqtt_user=mqtt_user)
 
     return render(request,
-                  "main/pause_activation.html",
+                  "pause_activation.html",
                   {
                       "mqtt_user": mqtt_user,
                       "cont": cont,
@@ -106,7 +106,7 @@ def manual_activation(request, mqtt_user, chn, minutes=-1):
         return redirect("controller", mqtt_user=mqtt_user)
 
     return render(request,
-                  "main/manual_activation.html",
+                  "manual_activation.html",
                   {
                       "mqtt_user": mqtt_user,
                       "cont": cont,
@@ -133,7 +133,7 @@ def manual_activation_selector(request, mqtt_user, turn_off_all=False):
             return redirect("controller", mqtt_user=mqtt_user)
 
     return render(request,
-                  "main/manual_activation_selector.html",
+                  "manual_activation_selector.html",
                   {
                       "mqtt_user": mqtt_user,
                       'channels_state_json': json.dumps([i.state for i in channels]),
@@ -162,7 +162,7 @@ def channel_naming(request, mqtt_user):
                     channel.save()
         return redirect("controller", mqtt_user)
 
-    return render(request, "main/channel_naming.html", {
+    return render(request, "channel_naming.html", {
         "cont": controller,
         "mqtt_user": mqtt_user,
         "channels_names_json": [i.name for i in channels]
@@ -232,7 +232,7 @@ def controller(request, mqtt_user):
     for chn in channels:
         lines.append(Line(chn.name, chn.state, get_week(chn)))
 
-    return render(request, 'main/controller.html',
+    return render(request, 'controller.html',
                   {
                       'mqtt_user': mqtt_user,
                       'lines_week': lines,
@@ -288,7 +288,7 @@ def controller_day(request, mqtt_user, day):
                     if lines[p.channel.id-1][h][m] == 0:
                         lines[p.channel.id-1][h][m] = 1
 
-    return render(request, 'main/controller_day.html',
+    return render(request, 'controller_day.html',
                   {
                       'mqtt_user': mqtt_user,
                       'day': DAYS[day],
@@ -326,7 +326,7 @@ def program(request, mqtt_user, chn, prg_num):
         instance.edit_or_add_program(chn, prg_num, days, weeks, hour, minute, t_min, t_max)
         return redirect("channel", mqtt_user, chn)
 
-    return render(request, "main/setup_wdays.html",
+    return render(request, "setup_wdays.html",
                   {
                       "mqtt_user": mqtt_user,
                       "chn": chn,
@@ -367,7 +367,7 @@ def pump(request, mqtt_user):
 
     pmin, pmax, vmin, vmax = instance.get_pump_settings()
 
-    return render(request, "main/pump.html",
+    return render(request, "pump.html",
                   {
                       "mqtt_user": mqtt_user,
                       "pmin": "{0:.1f}".format(pmin / 10).replace(",", "."),
@@ -481,7 +481,7 @@ def channel(request, mqtt_user, chn, create_prg=False):
             chan.save()
             return redirect("controller", mqtt_user)
 
-    return render(request, 'main/channel.html',
+    return render(request, 'channel.html',
                   {
                       'mqtt_user': mqtt_user,
                       'chn': int(chn),
