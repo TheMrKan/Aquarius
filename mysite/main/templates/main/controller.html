@@ -17,11 +17,13 @@
 	{% csrf_token %}
 </form>
 <script type="text/javascript">
-	const PREFIX = "{{ prefix }}"
+	const MQTT_USER = "{{ mqtt_user }}"
 	var channels_state = [];
+	var channels_meandrs = [];
 	var load_time = new Date();
 	var controller_time = new Date(load_time.getFullYear(), load_time.getMonth(), load_time.getDate(), 0, 0, 0);
 	var paused = false;
+	var hidden_channel = "{{ hidden_channel }}";
 
 
 	function update_data_on_page(properties)
@@ -33,8 +35,8 @@
 		else
 		{
 			document.getElementById("mbody").style.backgroundColor = "#2F4F4F";
-		}
 
+		}
 
 		if (properties["hour"] != undefined & properties["minute"] != undefined & properties["second"] != undefined)
 		{
@@ -80,7 +82,6 @@
 		if (properties["channels_meandrs"] != undefined)
 		{
 			channels_meandrs = properties["channels_meandrs"];
-			alert(channels_meandrs());
 		}
 
 		if (properties["channels_state"] != undefined)
@@ -90,11 +91,16 @@
 			set_channels_status();
 		}
 
+		if (properties["name"] != undefined & !(document.activeElement === document.getElementById("controller_name")))
+		{
+			document.getElementById("controller_name").value = properties["name"].toString();
+		}
+
 	}
 
 	var intervalId = window.setInterval(function(){
-  		socket.send(JSON.stringify({"prefix": PREFIX, "command": "get_properties"}));
-	}, 30000);
+  		socket.send(JSON.stringify({"mqtt_user": MQTT_USER, "command": "get_properties"}));
+	}, 60000);
 
 	const socket = new WebSocket(
             'ws://'
@@ -104,8 +110,9 @@
 
 	socket.onopen = function(e)
 	{
-	  	socket.send(JSON.stringify({"prefix": PREFIX, "command": "get_properties"}));
+	  	socket.send(JSON.stringify({"mqtt_user": MQTT_USER, "command": "get_properties"}));
 	};
+
 
     socket.onmessage = function(event)
     {
@@ -134,14 +141,14 @@
 				formData.append("set_time", str_time);
 
 				var xhr = new XMLHttpRequest();
-  				xhr.open("POST", "{% url 'controller' prefix %}");
+  				xhr.open("POST", "{% url 'controller' mqtt_user %}");
   				xhr.send(formData);
 			}
 
 		}
 	}
 
-	var pattern = "{% url 'channel' prefix '-to_replace-' %}"
+	var pattern = "{% url 'channel' mqtt_user '-to_replace-' %}"
 	function redirect_to_channel(num)
 	{
 		let channel_num = current_page * 10 + num;
@@ -153,8 +160,14 @@
 		if (window.confirm("Приложение будет недоступно до окончания скачивания. Продолжить?"))
 		{
 			blocked = true;
-			socket.send(JSON.stringify({"prefix": PREFIX, "command": "download_data"}));
+			socket.send(JSON.stringify({"mqtt_user": MQTT_USER, "command": "download_data"}));
 		}
+	}
+
+	function save_name()
+	{
+		var name = document.getElementById("controller_name").value;
+		socket.send(JSON.stringify({"mqtt_user": MQTT_USER, "command": "set_name", "data": name}));
 	}
 </script>
 <body>
@@ -177,17 +190,17 @@
 
 				<div id="mbody" class="mbody">
 
-					 <div class="status">
+					 <div class="status" style="justify-content: flex-start;">
 
 						<div class="status__row">
 
-							<div class="status__column">
+							<div class="status__column" >
 								<div id="controller_time" class="titlew">&#8986; &nbsp; &nbsp; Загрузка...</div>
 								<div id="mqtt_status" class="titlew">MQTT - Загрузка...</div>
 								<div class="titlew" style="margin-top: 20px; margin-bottom: 0px;">
-									Aquarius {{ prefix }}
+									Aquarius {{ mqtt_user }}
 								</div>
-								<input type="text" style="width: 100%;" name="contr_name" form="channel_name" value="Ягодное, Дачная, 33" />
+								<input id="controller_name" type="text" style="width: 100%;" name="contr_name" value="Загрузка..." />
 							</div>
 
 							<div class="status__column">
@@ -203,16 +216,16 @@
 
 						<div class="status__row" style="height: 9%;">
 							<div class="status__column">
-								<button type="button" onclick="document.location='{% url 'channel_naming' prefix %}'" name="chname" form="main_form">Названия<br>каналов</button>
+								<button type="button" onclick="document.location='{% url 'channel_naming' mqtt_user %}'" name="chname" form="main_form">Названия<br>каналов</button>
 							</div>
 
 							<div class="status__column">
-								<button type="button" onclick="document.location='{% url 'manual_activation_selector' prefix %}'"><img src="{% static 'img/hand.png' %}" alt="Ручное упр" title="Ручное упр" height=80%></button>
+								<button type="button" onclick="document.location='{% url 'manual_activation_selector' mqtt_user %}'"><img src="{% static 'img/hand.png' %}" alt="Ручное упр" title="Ручное упр" height=80%></button>
 
 							</div>
 
 							<div class="status__column">
-								<button type="button" onclick="document.location='{% url 'pause' prefix %}'"><img src="{% static 'img/pause.png' %}" alt="Пауза" title="Пауза" height=65%></button>
+								<button type="button" onclick="document.location='{% url 'pause' mqtt_user %}'"><img src="{% static 'img/pause.png' %}" alt="Пауза" title="Пауза" height=65%></button>
 							</div>
 
 							<div class="status__column">
@@ -221,7 +234,7 @@
 
 						</div>
 
-						<div class="status__row" style="height: ;">
+						<div class="status__row" {% if hide_channels_selector %} style="height: 0;" {% endif %}>
 							<div class="status__column">
 								<div id="chns_selector_0" class="titlef folderoff">
 									<a  onClick="javascript:set_channels(0);" role="button" href="#" class="myxhref">Каналы 1-10<br></a>
@@ -331,7 +344,7 @@
 								</div>
 							</div>
 
-							<div class="status__column" style="height: 0;">
+							<div class="status__column">
 								<div id="chn10_div" class="titlev channeloff">
 									<a id="chn10" onClick="javascript:redirect_to_channel(10);" href="#" class="myxhref">Канал 10</a>
 									<div id="chn10_meandr" class="meandroff">_∏_∏_</div>
@@ -340,7 +353,7 @@
 
 							<div class="status__column">
 								<div class="titlev channeloff">
-									<a target="_blank" href="https://hi-garden.ru" class="myxhref">Насос</a>
+									<a href="{% url 'pump' mqtt_user %}" class="myxhref">Насос</a>
 									<div class="meandroff">&nbsp;</div>
 								</div>
 
@@ -349,7 +362,7 @@
 						</div>
 							</div>
 
-						<div class="status__row" style="margin-top: 15px;">
+						<div class="status__row"  style="margin-top: 15px;">
 
 							<div class="status__column">
 								<div class="imgsm">
@@ -394,13 +407,9 @@
 							</div>
 
 							<div class="status__column">
-								<div class="titlew">Avr: 159</div>
+								<div class="titlew">Avr: {{ cont.version }}</div>
 							</div>
 
-						</div>
-
-						<div class="status__row">
-							<br>
 						</div>
 					</div>
 
@@ -408,12 +417,16 @@
 			  </div>
 
 			  <div class="page__element page__footer">
-				<div class="fcontent"></div>
+				<div class="fcontent">
+
+				</div>
 			  </div>
 			</div>
 	</div>
 		<script type="text/javascript">
-
+			document.getElementById("controller_name").addEventListener('change', (event) => {
+			  save_name();
+			});
 		</script>
 </body>
 </html>
