@@ -384,6 +384,7 @@ class ControllerV2Manager:
             "stream": self.data_model.stream,
             "name": self.data_model.name,
             "channels_state": channels_state,
+            "pump_state": self.get_pump_state(),
             "channels_meandrs": [i.meaoff_cmin != 0 or i.meaoff_cmax != 0 for i in channels],
         }
 

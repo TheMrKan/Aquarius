@@ -96,6 +96,15 @@
 			document.getElementById("controller_name").value = properties["name"].toString();
 		}
 
+		if (hidden_channel == "" & {% if hide_channels_selector %}true{% else %}false{% endif %})
+		{
+			document.getElementById("pump_div").parentElement.style = "height: 0;"
+		}
+		else
+		{
+			document.getElementById("pump_div").style = "height: ;"
+		}
+
 	}
 
 	var intervalId = window.setInterval(function(){
@@ -352,7 +361,7 @@
 							</div>
 
 							<div class="status__column">
-								<div class="titlev channeloff">
+								<div id="pump_div" class="titlev channeloff">
 									<a href="{% url 'pump' mqtt_user %}" class="myxhref">Насос</a>
 									<div class="meandroff">&nbsp;</div>
 								</div>

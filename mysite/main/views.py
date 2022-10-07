@@ -219,7 +219,7 @@ def controller(request, mqtt_user):
     cont = Controller.objects.get(mqtt_user=mqtt_user)
 
     hide_channels_selector: bool = cont.version < 200
-    hidden_channel: str = "" if hide_channels_selector and not instance.get_pump_state() \
+    hidden_channel: str = "" if not hide_channels_selector or not instance.get_pump_state() \
         else str(instance.pump_channel_number)
 
     class Line:
