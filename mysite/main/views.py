@@ -466,6 +466,7 @@ def channel(request, mqtt_user, chn, create_prg=False):
     if instance is not None:
         if request.method == 'POST':
             data = request.POST.dict()
+            print(data)
             chan.season = int(data["seasonpc"])
             chan.temp_min = int(data["cmindeg"]) if data["cmindeg"] else chan.temp_min
             chan.temp_max = int(data["cmaxdeg"]) if data["cmaxdeg"] else chan.temp_max
@@ -475,7 +476,7 @@ def channel(request, mqtt_user, chn, create_prg=False):
             chan.press_on = float(data["press_on"]) * 10
             chan.press_off = float(data["press_off"]) * 10
             chan.lowlevel = "lowlevel" in data.keys()
-            chan.rainsens = "rainsens_on" in data.keys()
+            chan.rainsens = True if data["rainsens"] == '1' else False
             chan.tempsens = int(data["tempsens"])
             instance.command_send_channel(chan.number)
             chan.save()

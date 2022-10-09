@@ -102,9 +102,42 @@
 	{
 		document.getElementById("channel_settings").submit();
 	}
+
+	function change_rainsens()
+	{
+		var formObject = document.forms["channel_settings"];
+		if (formObject.elements["rainsens_status"].value == "0")
+		{
+			formObject.elements["rainsens_status"].value = "1"
+		}
+		else
+		{
+			formObject.elements["rainsens_status"].value = "0"
+		}
+
+		set_rainsens_button_state();
+
+	}
+
+	function set_rainsens_button_state()
+	{
+		var img = document.getElementById("rainsens_image");
+		var formObject = document.forms["channel_settings"];
+
+		if (formObject.elements["rainsens_status"].value == "1")
+		{
+			img.src = "{% static 'img/rain.png' %}";
+		}
+		else
+		{
+			img.src = "{% static 'img/raing.png' %}";
+		}
+	}
+
 </script>
 <body>
 	<form id="channel_settings" action="#" method="post" enctype="multipart/form-data">{% csrf_token %}</form>
+	<input id="rainsens_status" name="rainsens" type="hidden" form="channel_settings" value="{% if chan.rainsens %}1{% else %}0{% endif %}">
 	<div class="wrapper">
 
 		<div class="page">
@@ -226,15 +259,19 @@
 									<button onClick="window.location.replace('{% url 'manual_activation' mqtt_user chn %}')" type="button" name="manual" form="channel_settings"><img src="{% static 'img/hand.png' %}" alt="Ручное упр" title="Ручное упр" height=50px></button>
 								</div>
 
-								<div class="status__column" style="flex: 0 0 26%; padding-top: 20px;">
-									<input {% if chan.rainsens %}checked{% endif %} type="checkbox" id="rainsens_on" name="rainsens_on" form="channel_settings" value="yes" /><label for="rainsens_on" style="display: inline;"><br>Использовать датчик дождя</label>
+								<div class="status__column" style="flex: 0 0 24%;">
+									<button id="rainsens_button" onClick="change_rainsens()" type="button" form="channel_settings" style="background-color: #2F4F4F;"><img id="rainsens_image" src="{% static 'img/rain.png' %}" alt="Датчик дождя" title="Датчик дождя" height=90%></button>
 								</div>
+
+								<!--<div class="status__column" style="flex: 0 0 26%; padding-top: 20px;">
+									<input {% if chan.rainsens %}checked{% endif %} type="checkbox" id="rainsens_on" name="rainsens_on" form="channel_settings" value="yes" /><label for="rainsens_on" style="display: inline;"><br>Использовать датчик дождя</label>
+								</div>-->
 
 								<div class="status__column" style="flex: 0 0 13%; padding-top: 15px;">
 
-									<input {% if chan.tempsens == 1 %}checked{% endif %} type="radio" id="tempsens1" name="tempsens" form="channel_settings" value="1" /><label for="tempsens1">1<br>&nbsp;</label>
+									<input {% if chan.tempsens == 1 %}checked{% endif %} checked type="radio" id="tempsens1" name="tempsens" form="channel_settings" value="1" /><label for="tempsens1">1<br>&nbsp;</label>
 
-									<input {% if chan.tempsens == 2 %}checked{% endif %} type="radio" id="tempsens2" name="tempsens" value="2" /><label for="tempsens2">2</label>
+									<input {% if chan.tempsens == 2 %}checked{% endif %} type="radio" id="tempsens2" name="tempsens" form="channel_settings" value="2" /><label for="tempsens2">2</label>
 
 								</div>
 								<div class="status__column" style="flex: 0 0 13%;">
@@ -263,6 +300,7 @@
 				add_program(item);
 			});
 			set_pressure();
+			set_rainsens_button_state();
 		</script>
 </body>
 </html>
