@@ -1,0 +1,76 @@
+{% block content %}
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1.0, user-scalable=0">
+	<meta name="format-detection" content="telephone=no">
+	<title>Registration</title>
+	<!--<link rel="stylesheet" href="css/style.css">-->
+	{% load static %}
+	<link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<form method="post" action=".">
+  {% csrf_token %}
+
+  <div class="page">
+    <div class="page__row">
+
+      <div class="page__head">
+        <div class="mhead">
+          <div class="mhead__title">Регистрация пользователя</Main></div>
+          <a target="_blank" href="https://hi-garden.ru/aqua2-manual" class="mhead__manual xhref">&#8942;</a>		 
+         </div>
+      </div>
+
+      <div class="page__body">
+
+          <div class="mbody">
+            <div class="status" style="justify-content: flex-start;">
+
+              <table>
+                {% for field in form %}
+
+                  {% if field.errors %}
+
+                    {% for error in field.errors %}
+
+                <tr><td>{{ error|escape }}</td></tr>
+
+                    {% endfor %}
+
+                  {% endif %}
+
+                {% endfor %}
+              <tr>
+                <td>{{ form.username.label_tag }}</td>
+                <td style="border: 1px solid gray;">{{ form.username }}</td>
+              </tr>
+          
+              <tr>
+                <td>{{ form.email.label_tag }}</td>
+                <td style="border: 1px solid gray;">{{ form.email }}</td>
+              </tr>
+          
+              <tr>
+                <td>{{ form.password1.label_tag }}</td>
+                <td style="border: 1px solid gray;">{{ form.password1 }}</td>
+              </tr>
+          
+              <tr>
+                <td>{{ form.password2.label_tag }}</td>
+                <td style="border: 1px solid gray;">{{ form.password2 }}</td>
+              </tr>
+          
+              </table>
+              <input type="submit" id="subbtn" value="Регистрация" />
+            </div>
+          </div>
+        
+      </div>
+
+      <div class="page__footer"></div>
+    </div>
+  </div>
+</form>
+{% endblock %}
