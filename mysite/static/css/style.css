@@ -82,7 +82,6 @@ body {
 
 .wrapper {
   height: 100%;
-  border: 1px solid red;
 }
 
 .page {
@@ -155,6 +154,7 @@ body {
 }
 .mbody .status {
   text-align: center;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -173,7 +173,6 @@ body {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   background-color: #2E8B57;
 }
 .mbody .status__column {
@@ -418,6 +417,10 @@ label {
   font-size: 150%;
   font-weight: 700;
   line-height: 120%;
+}
+
+img {
+  height: 90%;
 }
 
 input[type=checkbox]:checked,

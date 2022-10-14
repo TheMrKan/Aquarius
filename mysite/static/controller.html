@@ -199,7 +199,7 @@
 
 				<div id="mbody" class="mbody">
 
-					 <div class="status" style="justify-content: flex-start;">
+					 <div class="status">
 
 						<div class="status__row">
 
@@ -223,22 +223,22 @@
 						</div>
 
 
-						<div class="status__row" style="height: 9%;">
+						<div class="status__row" style="height: 80px;">
 							<div class="status__column">
 								<button type="button" onclick="document.location='{% url 'channel_naming' mqtt_user %}'" name="chname" form="main_form">Названия<br>каналов</button>
 							</div>
 
 							<div class="status__column">
-								<button type="button" onclick="document.location='{% url 'manual_activation_selector' mqtt_user %}'"><img src="{% static 'img/hand.png' %}" alt="Ручное упр" title="Ручное упр" height=80%></button>
+								<button type="button" onclick="document.location='{% url 'manual_activation_selector' mqtt_user %}'"><img src="{% static 'img/hand.png' %}" alt="Ручное упр" title="Ручное упр"></button>
 
 							</div>
 
 							<div class="status__column">
-								<button type="button" onclick="document.location='{% url 'pause' mqtt_user %}'"><img src="{% static 'img/pause.png' %}" alt="Пауза" title="Пауза" height=65%></button>
+								<button type="button" onclick="document.location='{% url 'pause' mqtt_user %}'"><img src="{% static 'img/pause.png' %}" alt="Пауза" title="Пауза"></button>
 							</div>
 
 							<div class="status__column">
-								<button type="button" onclick="javascript:block_while_downloading()"><img src="{% static 'img/download.png' %}" alt="Скачать" title="Скачать" height=70%></button>
+								<button type="button" onclick="javascript:block_while_downloading()"><img src="{% static 'img/download.png' %}" alt="Скачать" title="Скачать"></button>
 							</div>
 
 						</div>

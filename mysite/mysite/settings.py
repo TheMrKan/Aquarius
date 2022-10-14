@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-wk*0f1sf(+!)dsh9()8ao+fon#mx=t$k6bty-rq!#txyuna-_('
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DJANGO_DEBUG")
+DEBUG = True        #os.environ.get("DJANGO_DEBUG")
 
-ALLOWED_HOSTS = ["192.168.137.1", "hd.tlt.ru", "127.0.0.1"]
+ALLOWED_HOSTS = ["192.168.137.1", "hd.tlt.ru", "127.0.0.1", "192.168.31.191"]
 
 
 # Application definition
@@ -155,7 +155,7 @@ ACCOUNT_ACTIVATION_DAYS = 1 # кол-во дней для хранения ко�
 AUTH_USER_EMAIL_UNIQUE = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = os.environ.get("DJANGO_REGISTRATION_EMAIL_USER")
-EMAIL_HOST_PASSWORD = os.environ.get("DJANGO_REGISTRATION_EMAIL_PASSWORD")
+EMAIL_HOST_USER = "hidevice63@gmail.com"
+EMAIL_HOST_PASSWORD = "qlipnqxstjwcpfzk"
 EMAIL_USE_TLS = True
 EMAIL_FROM = 'no-reply@hd.tlt.ru'

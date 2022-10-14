@@ -24,7 +24,7 @@ body{
 
 .wrapper{
 	height: 100%;
-	border: 2px solid yellow;
+	//border: 2px solid yellow;
 }
 
 .page{
@@ -107,10 +107,11 @@ body{
 
 	.status {
 		text-align: center;
-		//height: 80%;
+		height: 100%;
 		display: flex;
 		flex-direction:column;
 		justify-content: space-between;
+		//border: 2px solid yellow;
 
 		&__row {
 			display: flex;
@@ -130,7 +131,7 @@ body{
 			flex: 1 1 auto;
 			display: flex;
 			flex-direction:column;
-			justify-content: space-between;
+			//justify-content: space-between;
 			background-color: #2E8B57;
 		
 		}
@@ -404,6 +405,11 @@ label
 	font-size: 150%;
 	font-weight: 700;
 	line-height: 120%;
+	}
+
+img
+	{
+		height: 90%;
 	}
 
 input[type="checkbox"]:checked, 
