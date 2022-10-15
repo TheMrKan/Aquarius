@@ -248,18 +248,18 @@
 
 							</div>
 
-							<div class="status__row" style="height: 15%;">
+							<div class="status__row" style="height: 90px;">
 
-								<div class="status__column" style="flex: 0 0 24%; padding: 10px 0;">
-									<button onClick="save()" type="button" name="save_prog" form="channel_settings"><img src="{% static 'img/save.png' %}" alt="Сохранить" title="Сохранить" height=50px></button>
+								<div class="status__column" style="flex: 0 0 24%; padding: 12px 0;">
+									<button onClick="save()" type="button" name="save_prog" form="channel_settings"><img src="{% static 'img/save.png' %}" alt="Сохранить" title="Сохранить" height="60px"></button>
 								</div>
 
-								<div class="status__column" style="flex: 0 0 24%; padding: 10px 0;">
-									<button onClick="window.location.replace('{% url 'manual_activation' mqtt_user chn %}')" type="button" name="manual" form="channel_settings"><img src="{% static 'img/hand.png' %}" alt="Ручное упр" title="Ручное упр" height=50px></button>
+								<div class="status__column" style="flex: 0 0 24%; padding: 12px 0;">
+									<button onClick="window.location.replace('{% url 'manual_activation' mqtt_user chn %}')" type="button" name="manual" form="channel_settings"><img src="{% static 'img/hand.png' %}" alt="Ручное упр" title="Ручное упр" height="60px"></button>
 								</div>
 
-								<div class="status__column" style="flex: 0 0 24%;">
-									<button id="rainsens_button" onClick="change_rainsens()" type="button" form="channel_settings" style="background-color: #2F4F4F;"><img id="rainsens_image" src="{% static 'img/rain.png' %}" alt="Датчик дождя" title="Датчик дождя" height=75%></button>
+								<div class="status__column" style="flex: 0 0 24%; padding: 8px 0;">
+									<button id="rainsens_button" onClick="change_rainsens()" type="button" form="channel_settings" style="background-color: #2F4F4F;"><img id="rainsens_image" src="{% static 'img/rain.png' %}" alt="Датчик дождя" title="Датчик дождя" height="72px"></button>
 								</div>
 
 								<div class="status__column" style="flex: 1 0 13%; padding-top: 15px;">
