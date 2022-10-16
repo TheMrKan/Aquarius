@@ -27,7 +27,7 @@
 				<div class="page__head">
 				 <div class="mhead">
 					<div class="mhead__title">Названия каналов</Main></div>
-					<a target="_blank" href="https://hi-garden.ru/aqua2-manual" class="mhead__manual xhref">&#8942;</a>		 
+					<a href="javascript:save()" class="mhead__manual xhref">&#10006;</a>
 				 </div>
 			
 				</div>
@@ -186,14 +186,14 @@
 
 							<div class="status__column">
 
-									<button type="button" onClick="javascript:save()" name="save_prog" form="channel_name"><img src="{% static 'img/save.png' %}" alt="Сохранить" title="Сохранить" width="20%"></button>
+									<button type="button" onClick="javascript:save()" name="save_prog" form="channel_name"><img src="{% static 'img/save.png' %}" alt="Сохранить" title="Сохранить"></button>
 							</div>
 						</div>
 
 						<div class="status__row">
 
 							<div class="status__column">
-								<div class="titlew">Esp: 1.9.3</div>
+								<div class="titlew">Esp: {{ cont.esp_v }}</div>
 							</div>
 
 							<div class="status__column">
@@ -201,7 +201,7 @@
 							</div>
 
 							<div class="status__column">
-								<div class="titlew">Avr: 159</div>
+								<div class="titlew">Avr: {{ cont.version }}</div>
 							</div>
 
 						</div> 

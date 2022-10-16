@@ -148,7 +148,7 @@
 				 	<div class="mhead">
 						<div class="mhead__title">Программирование</div>
 						<div class="mhead__channel">{{ chan.name }}</div>
-						<a target="_blank" href="https://hi-garden.ru/aqua2-manual" class="mhead__manual xhref">&#8942;</a>
+						<a href="javascript:save()" class="mhead__manual xhref">&#10006;</a>
 					 </div>
 				</div>
 
@@ -169,7 +169,6 @@
 
 									<div class="status__column wdays">
 										<div class="titlew">
-											{{ chan.name }}
 											<br>
 											<button onClick="javascript:create_program()" type="button" name="new_prog" form="channel_settings" style="font-size: 100%;">+ программа</button>
 										</div>
@@ -215,7 +214,7 @@
 
 							</div>
 							
-								<div class="status__table" style="border: 2px solid yellow;">
+								<div class="status__table">
 									<div id="programs">
 										{% for prg in prgs %}
 	
@@ -250,25 +249,21 @@
 
 							</div>
 
-							<div class="status__row" style="height: 11%;">
+							<div class="status__row" style="height: 90px;">
 
-								<div class="status__column" style="flex: 0 0 24%;">
-									<button onClick="save()" type="button" name="save_prog" form="channel_settings"><img src="{% static 'img/save.png' %}" alt="Сохранить" title="Сохранить" height=50px></button>
+								<div class="status__column" style="flex: 0 0 24%; padding: 12px 0;">
+									<button onClick="save()" type="button" name="save_prog" form="channel_settings"><img src="{% static 'img/save.png' %}" alt="Сохранить" title="Сохранить" height="60px"></button>
 								</div>
 
-								<div class="status__column" style="flex: 0 0 24%;">
-									<button onClick="window.location.replace('{% url 'manual_activation' mqtt_user chn %}')" type="button" name="manual" form="channel_settings"><img src="{% static 'img/hand.png' %}" alt="Ручное упр" title="Ручное упр" height=50px></button>
+								<div class="status__column" style="flex: 0 0 24%; padding: 12px 0;">
+									<button onClick="window.location.replace('{% url 'manual_activation' mqtt_user chn %}')" type="button" name="manual" form="channel_settings"><img src="{% static 'img/hand.png' %}" alt="Ручное упр" title="Ручное упр" height="60px"></button>
 								</div>
 
-								<div class="status__column" style="flex: 0 0 24%;">
-									<button id="rainsens_button" onClick="change_rainsens()" type="button" form="channel_settings" style="background-color: #2F4F4F;"><img id="rainsens_image" src="{% static 'img/rain.png' %}" alt="Датчик дождя" title="Датчик дождя" height=75%></button>
+								<div class="status__column" style="flex: 0 0 24%; padding: 8px 0;">
+									<button id="rainsens_button" onClick="change_rainsens()" type="button" form="channel_settings" style="background-color: #2F4F4F;"><img id="rainsens_image" src="{% static 'img/rain.png' %}" alt="Датчик дождя" title="Датчик дождя" height="72px"></button>
 								</div>
 
-								<!--<div class="status__column" style="flex: 0 0 26%; padding-top: 20px;">
-									<input {% if chan.rainsens %}checked{% endif %} type="checkbox" id="rainsens_on" name="rainsens_on" form="channel_settings" value="yes" /><label for="rainsens_on" style="display: inline;"><br>Использовать датчик дождя</label>
-								</div>-->
-
-								<div class="status__column" style="flex: 0 0 13%; padding-top: 15px;">
+								<div class="status__column" style="flex: 1 0 13%; padding-top: 15px;">
 
 									<input {% if chan.tempsens == 1 %}checked{% endif %} checked type="radio" id="tempsens1" name="tempsens" form="channel_settings" value="1" /><label for="tempsens1">1<br>&nbsp;</label>
 
@@ -283,7 +278,8 @@
 								</div>
 							
 							</div>
-					</div>
+
+						</div>
 
 				 	</div>
 			  	</div>

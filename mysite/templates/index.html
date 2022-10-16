@@ -18,8 +18,9 @@
 
                     <div class="page__head">
                         <div class="mhead">
+                            <a target="_blank" href="https://hi-garden.ru/" class="mhead__logo xhref">Hi-Garden</a>
                             <div class="mhead__title">Выбор контроллера</Main></div>
-                            <a target="_blank" href="https://hi-garden.ru/aqua2-manual" class="mhead__manual xhref">&#8942;</a>		 
+                            <a href="{% url 'index' %}" class="mhead__manual xhref">&#10006;</a>		 
                          </div>
                     </div>
 
@@ -104,11 +105,11 @@
                                     </div>
 
                                     <div class="status__row">
-                                        <div class="titlew">
+                                        <div class="titlew" style="margin-left: 50px;">
                                             {% if controllers|length > 0 %}
                                             <ul>
                                                 {% for cont in controllers %}
-                                                <li><a  style="color: yellow;" href="controllers/{{ cont.mqtt_user }}">{{ cont.name }}</a></li>
+                                                <li style="list-style-type: decimal;"><a style="color: #FFFFBB" href="controllers/{{ cont.mqtt_user }}">{{ cont.name }}</a><br>&nbsp;</li>
                                                 {% endfor %}
                                             </ul>
                                             {% else %}

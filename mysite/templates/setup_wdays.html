@@ -44,12 +44,12 @@
 							<b>Программа полива</b>
 						</div>
 
-						<div class="mhead__title">
+						<div class="mhead__channel">
 							<b>Канал {{ chn }}</b>
 						</div>
 
 						<div class="mhead__manual">
-							<a target="_blank" href="https://hi-garden.ru/aqua2-manual" class="mhead__manual xhref">&#8942;</a>
+							<a target="_blank" href="https://hi-garden.ru/aqua2-manual" class="mhead__manual xhref">&#10006;</a>
 						</div>
 						
 					</div>
@@ -148,7 +148,11 @@
 									<button onClick="save()" type="button" name="save_prog" form="prog_settings"><img src="{% static 'img/save.png' %}" alt="Сохранить" title="Сохранить" width="40%"></button>
 								</div>
 							</div>
-
+							<div class="status__column">
+								<div class="wdbox__row">
+									<button onClick="save()" type="button" name="del_prog" form="prog_settings"><img src="{% static 'img/delete.png' %}" alt="Удалить" title="Удалить" width="40%"></button>
+								</div>
+							</div>
 						</div>
 					</div>
 

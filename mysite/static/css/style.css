@@ -133,8 +133,9 @@ body {
   white-space: nowrap;
 }
 .mhead__channel {
-  font-size: 100%;
+  font-size: 140%;
   font-weight: 700;
+  color: yellow;
   margin: 0 2%;
   text-align: left;
 }
