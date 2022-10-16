@@ -257,7 +257,14 @@ class ControllerV2Manager:
         prg.save()
         self.command_send_channel(channel_num)
         return prg
-    
+
+    def remove_program(self, channel_num: int, prg_num: int):
+        try:
+            program = Program.objects.get(channel__controller=self.data_model, channel__number=channel_num, number=prg_num)
+        except ObjectDoesNotExist:
+            return
+
+        program.delete()
 
     def command_send_channel(self, chn):
         channel = Channel.objects.get(controller=self.data_model, number=chn)

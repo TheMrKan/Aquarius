@@ -312,12 +312,17 @@ def program(request, mqtt_user, chn, prg_num):
     if ControllerV2Manager.check_block(mqtt_user):
         return redirect("controller", mqtt_user)
 
-    instance = ControllerV2Manager.get_instance(mqtt_user)
+    instance: ControllerV2Manager = ControllerV2Manager.get_instance(mqtt_user)
     program = Program.objects.get(channel__controller__mqtt_user=mqtt_user, channel__number=chn, number=prg_num)
     weeks = program.get_weeks()
 
     if request.method == 'POST':
-        data = request.POST.dict()
+        data: dict = request.POST.dict()
+
+        if data.get("delete_prg", "False") == "True":
+            instance.remove_program(program.channel.number, program.number)
+            return redirect("channel", mqtt_user, chn)
+
         days = "".join([str(i) for i in range(1, 8) if f"wd{i}" in data.keys()])
         weeks = ("even" in data.keys(), "odd" in data.keys())
         hour = int(data["prog_time"][:2])
