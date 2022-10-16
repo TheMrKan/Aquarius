@@ -42,6 +42,7 @@ class Controller(models.Model):
     def __str__(self):
         return self.name
 
+
 class Channel(models.Model):
     id = models.AutoField(primary_key=True)
     number = models.IntegerField(default=1)
@@ -49,8 +50,8 @@ class Channel(models.Model):
     controller = models.ForeignKey('Controller', on_delete=models.CASCADE)
     state = models.BooleanField(default=False)
     season = models.IntegerField(default=100)
-    temp_min = models.IntegerField(default=10)
-    temp_max = models.IntegerField(default=30)
+    temp_min = models.IntegerField(default=8)
+    temp_max = models.IntegerField(default=32)
     meandr_on = models.IntegerField(default=60)
     meaoff_cmin = models.IntegerField(default=0)
     meaoff_cmax = models.IntegerField(default=0)

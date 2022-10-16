@@ -232,12 +232,14 @@ def controller(request, mqtt_user):
     for chn in channels:
         lines.append(Line(chn.name, chn.state, get_week(chn)))
 
+    day = list(DAYS.values())[cont.day - 1] if cont.day <= len(DAYS) else "Ошибка"
+
     return render(request, 'controller.html',
                   {
                       'mqtt_user': mqtt_user,
                       'lines_week': lines,
                       'cont': cont,
-                      'day': list(DAYS.values())[cont.day-1],
+                      'day': day,
                       'channels_state_json': json.dumps([i.status for i in lines]),
                       'channels_names_json': json.dumps([i.name for i in lines]),
                       "hide_channels_selector": hide_channels_selector,
@@ -451,8 +453,8 @@ def channel(request, mqtt_user, chn, create_prg=False):
     instance: ControllerV2Manager = ControllerV2Manager.get_instance(mqtt_user)
 
     if create_prg:
-        instance.create_program(chn)
-        return redirect("channel", mqtt_user, chn)
+        new_prg: Program = instance.create_program(chn)
+        return redirect("program", mqtt_user, chn, new_prg.number)
 
     chan: Channel = Channel.objects.get(controller__mqtt_user=mqtt_user, number=chn)
     programs = Program.objects.filter(channel=chan)
@@ -467,7 +469,7 @@ def channel(request, mqtt_user, chn, create_prg=False):
         if request.method == 'POST':
             data = request.POST.dict()
             print(data)
-            chan.season = int(data["seasonpc"])
+            chan.season = int(data["seasonpc"]) if data["seasonpc"].isdigit() else 100
             chan.temp_min = int(data["cmindeg"]) if data["cmindeg"] else chan.temp_min
             chan.temp_max = int(data["cmaxdeg"]) if data["cmaxdeg"] else chan.temp_max
             chan.meandr_on = int(data["meandr_on"]) if data["meandr_on"] else chan.meandr_on

@@ -20,9 +20,9 @@ class ControllerConsumer(WebsocketConsumer):
             del ControllerConsumer.consumers[k]
 
     @staticmethod
-    def send_data_downloaded(prefix):
+    def send_data_downloaded(prefix: str, error: str = ""):
         if prefix in ControllerConsumer.consumers.keys():
-            ControllerConsumer.consumers[prefix].send(text_data=json.dumps({"type": "data_downloaded"}))
+            ControllerConsumer.consumers[prefix].send(text_data=json.dumps({"type": "data_downloaded", "error": error}))
 
     @staticmethod
     def send_properties(prefix, properties, is_time_updated=True):

@@ -10,6 +10,8 @@ import json
 from typing import List, Tuple
 from main.consumers import ControllerConsumer
 import threading
+
+
 def try_int(i):
     try:
         return int(i)
@@ -68,7 +70,6 @@ class ControllerV2Manager:
         else:
             return None
 
-
     @staticmethod
     def add(user: str, password: str, **kwargs):
         if ControllerV2Manager.get_instance(user, False) is None:
@@ -115,7 +116,10 @@ class ControllerV2Manager:
             if len(s_cont) > 0:
                 return ControllerV2Manager.check_auth(s_cont[0][0], s_cont[0][1])
         else:
-            data_model = Controller.objects.get(mqtt_user=mqtt_user, mqtt_password=password)
+            try:
+                data_model = Controller.objects.get(mqtt_user=mqtt_user, mqtt_password=password)
+            except ObjectDoesNotExist:
+                return False
             return data_model is not None and data_model.mqtt_user == mqtt_user and data_model.mqtt_password == password
 
     def __init__(self, host: str, port: int,  controller_user: str, password: str, prefix: str, mqtt_manager: MQTTManager):
@@ -137,7 +141,7 @@ class ControllerV2Manager:
             try:
                 channel = Channel.objects.get(controller=self.data_model, number=channel_num)
             except ObjectDoesNotExist:
-                channel = Channel(controller=self.data_model, name=f"Канал {channel_num}", number=channel_num)
+                channel = Channel(controller=self.data_model, name=f"Канал {channel_num}", number=channel_num, )
                 channel.save()
             except MultipleObjectsReturned:
                 Channel.objects.filter(controller=self.data_model, number=channel_num).delete()
@@ -155,7 +159,6 @@ class ControllerV2Manager:
         mqtt.onConnected = self.on_connected
 
     def send_command(self, request_code: str, payload: str = ""):
-        print(self.blocked)
         if not self.blocked:
             msg = self.wrap_command(request_code, payload)
             self.last_command = request_code
@@ -276,8 +279,17 @@ class ControllerV2Manager:
 
         if True:
             self.blocked = True
-            data = data.split(".10.11.12.13.12.11.10")[0]
+            if not data.startswith("*"):
+                self.packet = -1
+                self.stashed_data = []
+                self.blocked = False
+                ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
+                return True
+
+            data = data.replace("*", "")
+            data = data.split(".10.11.12.13.12.11.10.")[0]
             parsed_message = list(map(try_int, data.split(".")))
+
             packet_number = parsed_message[0]
             del parsed_message[0]
 
@@ -285,7 +297,7 @@ class ControllerV2Manager:
                 self.packet = -1
                 self.stashed_data = []
                 self.blocked = False
-                ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user)
+                ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
                 return True
 
             missed_bytes = max((packet_number - self.packet - 1), 0) * bytes_in_packet
@@ -430,7 +442,7 @@ class ControllerV2Manager:
             self.data_model.version = s[27]
             self.data_model.ip = f"{s[28]}.{s[29]}.{s[30]}.{s[31]}"
             self.data_model.esp_v = f"{s[32]}.{s[33]}.{s[34]}"
-            esp_d = BitArray(int=s[35], length=8)[::-1]
+            esp_d = BitArray(uint=s[35], length=8)[::-1]
             self.data_model.esp_connected = esp_d[0]
             self.data_model.esp_ap = esp_d[1]
             self.data_model.esp_net = esp_d[2]

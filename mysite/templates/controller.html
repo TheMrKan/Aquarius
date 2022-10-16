@@ -132,8 +132,17 @@
     	}
     	else if (data["type"] == "data_downloaded")
     	{
-			alert("Данные загружены.");
-			location.reload()
+			if (data["error"] == "ERROR")
+			{
+				alert("Во время загрузки данных произошла ошибка.");
+				location.reload();
+			}
+			else
+			{
+				alert("Данные загружены.");
+				location.reload()
+			}
+
     	}
 	};
 

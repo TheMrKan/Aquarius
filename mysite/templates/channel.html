@@ -85,6 +85,7 @@
 		new_prg.querySelector('#prg_example_t_max').innerHTML = prgData["t_max"].toString();
 
 		programs.append(new_prg);
+
 	}
 
 	function set_pressure()
@@ -181,12 +182,12 @@
 
 									<div class="status__column lbas">
 										<div class="titlew">°C<br>min</div>
-										<input type="number" name="cmindeg" form="channel_settings" value="{{ chan.cmin }}" />
+										<input type="number" name="cmindeg" form="channel_settings" value="{{ chan.temp_min }}" />
 									</div>
 
 									<div class="status__column lbas">
 										<div class="titlew">°C<br>max</div>
-										<input type="number" name="cmaxdeg" form="channel_settings" value="{{ chan.cmax }}" />
+										<input type="number" name="cmaxdeg" form="channel_settings" value="{{ chan.temp_max }}" />
 									</div>
 							</div>
 
