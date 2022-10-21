@@ -306,38 +306,38 @@ def channels(request, mqtt_user):
     channels = Channel.objects.filter(controller__mqtt_user=mqtt_user)
 
 @login_required()
-def program(request, mqtt_user, chn, prg_num):
+def program(request, mqtt_user, chn, prg_id):
     if not ControllerV2Manager.check_auth(mqtt_user=mqtt_user, user=request.user):
         return redirect("/")
     if ControllerV2Manager.check_block(mqtt_user):
         return redirect("controller", mqtt_user)
 
     instance: ControllerV2Manager = ControllerV2Manager.get_instance(mqtt_user)
-    program = Program.objects.get(channel__controller__mqtt_user=mqtt_user, channel__number=chn, number=prg_num)
+    program = Program.objects.get(id=prg_id)
     weeks = program.get_weeks()
 
     if request.method == 'POST':
         data: dict = request.POST.dict()
 
         if data.get("delete_prg", "False") == "True":
-            instance.remove_program(program.channel.number, program.number)
+            instance.remove_program(program.channel.number, program.id)
             return redirect("channel", mqtt_user, chn)
 
         days = "".join([str(i) for i in range(1, 8) if f"wd{i}" in data.keys()])
         weeks = ("even" in data.keys(), "odd" in data.keys())
-        hour = int(data["prog_time"][:2])
-        minute = int(data["prog_time"][3:5])
+        hour = int(data["prog_time"][:2]) if data["prog_time"][:2].isdigit() else 0
+        minute = int(data["prog_time"][3:5]) if data["prog_time"][:2].isdigit() else 0
         t_min = int(data["prog_cmin"])
         t_max = int(data["prog_cmax"])
 
-        instance.edit_or_add_program(chn, prg_num, days, weeks, hour, minute, t_min, t_max)
+        instance.edit_or_add_program(chn, prg_id, days, weeks, hour, minute, t_min, t_max)
         return redirect("channel", mqtt_user, chn)
 
     return render(request, "setup_wdays.html",
                   {
                       "mqtt_user": mqtt_user,
                       "chn": chn,
-                      "prg_num": prg_num,
+                      "prg_id": prg_id,
                       "time": f"{program.hour:02}:{program.minute:02}",
                       "t_min": program.t_min,
                       "t_max": program.t_max,
@@ -438,6 +438,7 @@ def channel(request, mqtt_user, chn, create_prg=False):
 
         def toDict(self):
             return {
+                "id": self.id,
                 "days": self.days,
                 "weeks": self.weeks,
                 "t_start_hour": self.t_start_hour,
@@ -459,7 +460,7 @@ def channel(request, mqtt_user, chn, create_prg=False):
 
     if create_prg:
         new_prg: Program = instance.create_program(chn)
-        return redirect("program", mqtt_user, chn, new_prg.number)
+        return redirect("program", mqtt_user, chn, new_prg.id)
 
     chan: Channel = Channel.objects.get(controller__mqtt_user=mqtt_user, number=chn)
     programs = Program.objects.filter(channel=chan)

@@ -53,13 +53,13 @@
 
 	function add_program(prgData)
 	{
-		let prg_num = programs.children.length + 1;
+		let prg_id = prgData["id"];
 		var example = document.getElementById('prg_example');
 		var new_prg = example.cloneNode(true);
-		var new_prg_url = prg_url_pattern.replace("-to_replace-", prg_num.toString());
+		var new_prg_url = prg_url_pattern.replace("-to_replace-", prg_id.toString());
 
 		new_prg.querySelector('#prg_example_num').href = new_prg_url;
-		new_prg.querySelector('#prg_example_num').innerHTML = prg_num.toString();
+		new_prg.querySelector('#prg_example_num').innerHTML = prg_id.toString();
 
 		new_prg.querySelector('#prg_example_days').href = new_prg_url;
 		var str_days = "";

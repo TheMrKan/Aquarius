@@ -43,7 +43,7 @@
 			controller_time = new Date(load_time.getFullYear(), load_time.getMonth(), load_time.getDate(), properties["hour"], properties["minute"], properties["second"]);
 
 			document.getElementById("controller_time").innerHTML = "&#8986; &nbsp; &nbsp; " + controller_time.getHours().toString() + ":" + two_digits(controller_time.getMinutes());
-
+			console.log("check time");
 			check_controller_time();
 		}
 

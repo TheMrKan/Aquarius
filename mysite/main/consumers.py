@@ -57,7 +57,6 @@ class ControllerConsumer(WebsocketConsumer):
         if instance is None:
             self.send(text_data=json.dumps({'error': "invalid prefix"}))
             return
-
         if command == "download_data":
             instance.command_get_channels()
         elif command == "get_properties":

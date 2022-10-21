@@ -12,7 +12,7 @@ urlpatterns = [
     path('controllers/<str:mqtt_user>/pump', views.pump, name='pump'),
     path('controllers/<str:mqtt_user>/channels/<str:chn>', views.channel, name='channel'),
     path('controllers/<str:mqtt_user>/channels/<str:chn>/create_program', lambda r, mqtt_user, chn: views.channel(r, mqtt_user, chn, True), name='create_program'),
-    path('controllers/<str:mqtt_user>/channels/<str:chn>/programs/<str:prg_num>', views.program, name='program'),
+    path('controllers/<str:mqtt_user>/channels/<str:chn>/programs/<str:prg_id>', views.program, name='program'),
     path('controllers/<str:mqtt_user>/channels/<str:chn>/manual_activation', views.manual_activation, name='manual_activation'),
     path('controllers/<str:mqtt_user>/channels/<str:chn>/manual_activation/<int:minutes>', views.manual_activation, name='manual_activation'),
     path('controllers/<str:mqtt_user>/manual_activation_selector', views.manual_activation_selector,
