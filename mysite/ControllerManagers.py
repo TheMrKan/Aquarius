@@ -215,6 +215,8 @@ class ControllerV2Manager:
         self.send_command("0.0.7", f"{minutes_bytes[0]}.{minutes_bytes[1]}")
 
     def command_get_channels(self) -> None:
+        self.wrong_packets = 0
+        self.packet = -1
         self.send_command("0.0.8")
 
     def set_email(self, email: str):
@@ -268,10 +270,12 @@ class ControllerV2Manager:
     def command_send_channel(self, chn):
         channel = Channel.objects.get(controller=self.data_model, number=chn)
         chn_settings = [channel.temp_min, channel.temp_max, channel.meandr_on, channel.meaoff_cmin, channel.meaoff_cmax,
-                        int(channel.press_on * 10), int(channel.press_off * 10), 0, 0,
-                        channel.season, 0, 0, 0, int(channel.rainsens), channel.tempsens, 0, 0, 0, 0]
+                        int(channel.press_on), int(channel.press_off), 0, 0,
+                        channel.season, 0, 0, 0, int(channel.rainsens), channel.tempsens, 0, 0, 0, 0, 0]
         programs = Program.objects.filter(channel=channel)
+        print(chn_settings)
         prgs = []
+        print(channel, programs)
         for prg in programs:
             days = int(''.join([(str(int(str(i) in prg.days))) for i in range(1, 8)]), 2)
             prg_data = [days, prg.weeks, prg.hour, prg.minute, prg.t_min, prg.t_max]
@@ -282,7 +286,7 @@ class ControllerV2Manager:
     def command_get_channels_response(self, data: str, **kwargs) -> bool:
         bytes_in_packet = 35
         total_packets = 27
-
+        print("Data: ", data)
         if True:
             self.blocked = True
             if not data.startswith("*"):
@@ -290,6 +294,7 @@ class ControllerV2Manager:
                     self.packet = -1
                     self.stashed_data = []
                     self.blocked = False
+                    print("Error 0")
                     ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
                     return True
                 else:
@@ -297,17 +302,19 @@ class ControllerV2Manager:
                     return False
 
             data = data.replace("*", "")
-            data = data.split(".10.11.12.13.12.11.10.")[0]
+            data = data.split(".10.11.12.13.12.11.10")[0]
             parsed_message = list(map(try_int, data.split(".")))
 
             packet_number = parsed_message[0]
-            del parsed_message[0]
 
+            del parsed_message[0]
+            print(packet_number, self.packet + 1, len(parsed_message))
             if packet_number != self.packet + 1 or len(parsed_message) != bytes_in_packet:
                 if self.wrong_packets >= 5:
                     self.packet = -1
                     self.stashed_data = []
                     self.blocked = False
+                    print("Error 1")
                     ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
                     return True
                 else:
@@ -320,22 +327,22 @@ class ControllerV2Manager:
             self.packet = packet_number
             print(f"Packet: {packet_number}")
             self.wrong_packets = 0
+
             if packet_number >= total_packets - 1:
+                [print(f"{n}: {i}") for n, i in enumerate(self.stashed_data)]
                 if len(self.stashed_data) != total_packets * bytes_in_packet:
                     print("Invalid data")
+                    print("Error 2")
                     ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
                     self.packet = -1
                     self.stashed_data = []
                     self.blocked = False
                     return True
 
-                skip_start = 20
-                self.stashed_data = self.stashed_data[skip_start:]
-
                 total_channels = 10
                 bytes_for_channel = 20
                 for i in range(total_channels):
-                    offset = bytes_for_channel * i
+                    offset = bytes_for_channel * i + 20
                     try:
                         channel_model: Channel = Channel.objects.get(controller=self.data_model, number=i+1)
                     except ObjectDoesNotExist:
@@ -351,14 +358,17 @@ class ControllerV2Manager:
                 total_programs = 80
                 bytes_for_program = 8
                 for i in range(total_programs):
-                    offset = bytes_for_program * i + 220
+                    offset = bytes_for_program * i + 240
+                    print(offset)
                     print(f"Processing channel {self.stashed_data[offset]}; program {self.stashed_data[offset+1]}")
-                    if self.stashed_data[offset] <= 0 or self.stashed_data[offset] >= total_programs:
+                    if self.stashed_data[offset] == 255 or self.stashed_data[offset+1] == 255:
+                        print("Skip empty program")
                         continue
-
                     channel_model: Channel = Channel.objects.get(controller=self.data_model, number=self.stashed_data[offset])
+                    print("Got channel model:", channel_model)
+                    Program.objects.filter(channel=channel_model).delete()
                     try:
-                        program_model: Program = Program.objects.filter(channel=channel_model)[self.stashed_data[offset+1]-1]
+                        program_model: Program = Program.objects.filter(channel=channel_model)[self.stashed_data[offset+1]]
                         print("Program found in DB")
                     except ObjectDoesNotExist:
                         program_model: Program = Program(channel=channel_model)
