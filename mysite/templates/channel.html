@@ -50,16 +50,18 @@
 	const prg_url_pattern = "{% url 'program' mqtt_user chn '-to_replace-' %}";
 	var programs_data_json = '{{ prg_data_json|safe }}'
 	var programs_data = JSON.parse(programs_data_json);
+	var total_programs = 0;
 
 	function add_program(prgData)
 	{
+		total_programs++;
 		let prg_id = prgData["id"];
 		var example = document.getElementById('prg_example');
 		var new_prg = example.cloneNode(true);
 		var new_prg_url = prg_url_pattern.replace("-to_replace-", prg_id.toString());
 
 		new_prg.querySelector('#prg_example_num').href = new_prg_url;
-		new_prg.querySelector('#prg_example_num').innerHTML = prg_id.toString();
+		new_prg.querySelector('#prg_example_num').innerHTML = total_programs.toString();
 
 		new_prg.querySelector('#prg_example_days').href = new_prg_url;
 		var str_days = "";
@@ -293,6 +295,14 @@
 			</div>
 	</div>
 		<script type="text/javascript">
+			programs_data.sort((a, b) =>
+			{
+				if (a.t_start_hour == b.t_start_hour)
+				{
+					return a.t_start_minute > b.t_start_minute ? 1 : -1;
+				}
+				return a.t_start_hour > b.t_start_hour ? 1 : -1;
+			})
 			programs_data.forEach(function(item, i, arr) {
 				add_program(item);
 			});

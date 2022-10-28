@@ -5,7 +5,7 @@ from .models import Controller, Channel, Program, UserExtension
 from operator import add
 from datetime import datetime, time, timedelta
 import time
-from ControllerManagers import ControllerV2Manager
+from ControllerManagers import ControllerV2Manager, LimitOfProgramsException
 from main.consumers import ControllerConsumer
 import json
 
@@ -16,6 +16,7 @@ DAYS = {'monday': 'Понедельник',
         'friday': 'Пятница',
         'saturday': 'Суббота',
         'sunday': 'Воскресенье'}
+
 
 @login_required
 def index(request):
@@ -218,6 +219,7 @@ def controller(request, mqtt_user):
     channels = Channel.objects.filter(controller__mqtt_user=mqtt_user)
     cont = Controller.objects.get(mqtt_user=mqtt_user)
 
+    hide_humidity = cont.version < 200
     hide_channels_selector: bool = cont.version < 200
     hidden_channel: str = "" if not hide_channels_selector or not instance.get_pump_state() \
         else str(instance.pump_channel_number)
@@ -243,6 +245,7 @@ def controller(request, mqtt_user):
                       'channels_state_json': json.dumps([i.status for i in lines]),
                       'channels_names_json': json.dumps([i.name for i in lines]),
                       "hide_channels_selector": hide_channels_selector,
+                      "hide_humidity": hide_humidity,
                       "hidden_channel": hidden_channel
                     })
 
@@ -459,7 +462,10 @@ def channel(request, mqtt_user, chn, create_prg=False):
     instance: ControllerV2Manager = ControllerV2Manager.get_instance(mqtt_user)
 
     if create_prg:
-        new_prg: Program = instance.create_program(chn)
+        try:
+            new_prg: Program = instance.create_program(chn)
+        except LimitOfProgramsException:
+            return redirect("channel", mqtt_user, chn)
         return redirect("program", mqtt_user, chn, new_prg.id)
 
     chan: Channel = Channel.objects.get(controller__mqtt_user=mqtt_user, number=chn)

@@ -19,6 +19,10 @@ def try_int(i):
         return 0
 
 
+class LimitOfProgramsException(Exception):
+    pass
+
+
 class ControllerV2Manager:
 
     DEFAULT_HOST = "185.134.36.37"
@@ -33,6 +37,7 @@ class ControllerV2Manager:
     topic_receive = "aqua_kontr"
 
     pump_channel_number = 10
+    max_programs_for_channel = 14
 
     user: str
     command_response_handlers: dict
@@ -247,6 +252,11 @@ class ControllerV2Manager:
 
     def create_program(self, channel_num: int) -> Program:
         chan = Channel.objects.get(controller__mqtt_user=self.data_model.mqtt_user, number=channel_num)
+
+        programs_exists = len(Program.objects.filter(channel=chan))
+        if programs_exists >= self.max_programs_for_channel:
+            raise LimitOfProgramsException
+
         prg = Program()
         prg.channel = chan
         prg.days = "1234567"
