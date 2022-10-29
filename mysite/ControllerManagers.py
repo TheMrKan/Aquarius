@@ -19,6 +19,10 @@ def try_int(i):
         return 0
 
 
+class LimitOfProgramsException(Exception):
+    pass
+
+
 class ControllerV2Manager:
 
     DEFAULT_HOST = "185.134.36.37"
@@ -33,6 +37,7 @@ class ControllerV2Manager:
     topic_receive = "aqua_kontr"
 
     pump_channel_number = 10
+    max_programs_for_channel = 14
 
     user: str
     command_response_handlers: dict
@@ -148,6 +153,7 @@ class ControllerV2Manager:
 
         self.mqtt_manager = mqtt_manager
         self.user = controller_user
+        self.wrong_packets = 0
         self.previous_time = datetime.time(0, 0, 0)
         self.command_response_handlers = {
             "8.8.8.8.8.8.8.8": self.command_get_state_response,
@@ -214,21 +220,26 @@ class ControllerV2Manager:
         self.send_command("0.0.7", f"{minutes_bytes[0]}.{minutes_bytes[1]}")
 
     def command_get_channels(self) -> None:
+        self.wrong_packets = 0
+        self.packet = -1
         self.send_command("0.0.8")
 
     def set_email(self, email: str):
         self.data_model.email = email
         self.data_model.save()
 
-    def edit_or_add_program(self, channel_num: int, prg_num: int, days: str, weeks: tuple, start_hour: int, start_minute: int, t_min: int, t_max: int):
+    def edit_or_add_program(self, channel_num: int, prg_id: int, days: str, weeks: tuple, start_hour: int, start_minute: int, t_min: int, t_max: int) -> Program:
         chan = Channel.objects.get(controller__mqtt_user=self.data_model.mqtt_user, number=channel_num)
-        prg = Program.objects.filter(channel=chan, number=prg_num)
+        if prg_id is None:
+            prg = Program()
+        else:
+            prg = Program.objects.filter(id=prg_id)
         if len(prg) > 0:
             prg = prg[0]
         else:
             prg = Program()
         prg.channel = chan
-        prg.number = prg_num
+        prg.number = prg_id
         prg.days = days
         prg.weeks = int(f'{int(weeks[0])}{int(weeks[1])}', 2)
         prg.hour = start_hour
@@ -237,17 +248,17 @@ class ControllerV2Manager:
         prg.t_max = t_max
         prg.save()
         self.command_send_channel(channel_num)
+        return prg
 
     def create_program(self, channel_num: int) -> Program:
         chan = Channel.objects.get(controller__mqtt_user=self.data_model.mqtt_user, number=channel_num)
-        programs = Program.objects.filter(channel=chan)
-        if len(programs) == 0:
-            prg_num = 1
-        else:
-            prg_num = max([i.number for i in programs]) + 1
+
+        programs_exists = len(Program.objects.filter(channel=chan))
+        if programs_exists >= self.max_programs_for_channel:
+            raise LimitOfProgramsException
+
         prg = Program()
         prg.channel = chan
-        prg.number = prg_num
         prg.days = "1234567"
         prg.weeks = 3
         prg.hour = 0
@@ -258,9 +269,9 @@ class ControllerV2Manager:
         self.command_send_channel(channel_num)
         return prg
 
-    def remove_program(self, channel_num: int, prg_num: int):
+    def remove_program(self, channel_num: int, prg_id: int):
         try:
-            program = Program.objects.get(channel__controller=self.data_model, channel__number=channel_num, number=prg_num)
+            program = Program.objects.get(id=prg_id)
         except ObjectDoesNotExist:
             return
 
@@ -269,10 +280,12 @@ class ControllerV2Manager:
     def command_send_channel(self, chn):
         channel = Channel.objects.get(controller=self.data_model, number=chn)
         chn_settings = [channel.temp_min, channel.temp_max, channel.meandr_on, channel.meaoff_cmin, channel.meaoff_cmax,
-                        int(channel.press_on * 10), int(channel.press_off * 10), 0, 0,
-                        channel.season, 0, 0, 0, int(channel.rainsens), channel.tempsens, 0, 0, 0, 0]
+                        int(channel.press_on), int(channel.press_off), 0, 0,
+                        channel.season, 0, 0, 0, int(channel.rainsens), channel.tempsens, 0, 0, 0, 0, 0]
         programs = Program.objects.filter(channel=channel)
+        print(chn_settings)
         prgs = []
+        print(channel, programs)
         for prg in programs:
             days = int(''.join([(str(int(str(i) in prg.days))) for i in range(1, 8)]), 2)
             prg_data = [days, prg.weeks, prg.hour, prg.minute, prg.t_min, prg.t_max]
@@ -283,52 +296,63 @@ class ControllerV2Manager:
     def command_get_channels_response(self, data: str, **kwargs) -> bool:
         bytes_in_packet = 35
         total_packets = 27
-
+        print("Data: ", data)
         if True:
             self.blocked = True
             if not data.startswith("*"):
-                self.packet = -1
-                self.stashed_data = []
-                self.blocked = False
-                ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
-                return True
+                if self.wrong_packets >= 5:
+                    self.packet = -1
+                    self.stashed_data = []
+                    self.blocked = False
+                    print("Error 0")
+                    ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
+                    return True
+                else:
+                    self.wrong_packets += 1
+                    return False
 
             data = data.replace("*", "")
-            data = data.split(".10.11.12.13.12.11.10.")[0]
+            data = data.split(".10.11.12.13.12.11.10")[0]
             parsed_message = list(map(try_int, data.split(".")))
 
             packet_number = parsed_message[0]
-            del parsed_message[0]
 
+            del parsed_message[0]
+            print(packet_number, self.packet + 1, len(parsed_message))
             if packet_number != self.packet + 1 or len(parsed_message) != bytes_in_packet:
-                self.packet = -1
-                self.stashed_data = []
-                self.blocked = False
-                ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
-                return True
+                if self.wrong_packets >= 5:
+                    self.packet = -1
+                    self.stashed_data = []
+                    self.blocked = False
+                    print("Error 1")
+                    ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
+                    return True
+                else:
+                    self.wrong_packets += 1
+                    return False
 
             missed_bytes = max((packet_number - self.packet - 1), 0) * bytes_in_packet
             self.stashed_data += [0] * missed_bytes
             self.stashed_data += parsed_message
             self.packet = packet_number
             print(f"Packet: {packet_number}")
+            self.wrong_packets = 0
 
             if packet_number >= total_packets - 1:
+                [print(f"{n}: {i}") for n, i in enumerate(self.stashed_data)]
                 if len(self.stashed_data) != total_packets * bytes_in_packet:
                     print("Invalid data")
-                    ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user)
+                    print("Error 2")
+                    ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
                     self.packet = -1
                     self.stashed_data = []
                     self.blocked = False
                     return True
 
-                skip_start = 20
-                self.stashed_data = self.stashed_data[skip_start:]
-
                 total_channels = 10
                 bytes_for_channel = 20
                 for i in range(total_channels):
-                    offset = bytes_for_channel * i
+                    offset = bytes_for_channel * i + 20
                     try:
                         channel_model: Channel = Channel.objects.get(controller=self.data_model, number=i+1)
                     except ObjectDoesNotExist:
@@ -344,26 +368,36 @@ class ControllerV2Manager:
                 total_programs = 80
                 bytes_for_program = 8
                 for i in range(total_programs):
-                    offset = bytes_for_program * i + 220
-                    if self.stashed_data[offset] <= 0 or self.stashed_data[offset] >= total_programs:
+                    offset = bytes_for_program * i + 240
+                    print(offset)
+                    print(f"Processing channel {self.stashed_data[offset]}; program {self.stashed_data[offset+1]}")
+                    if self.stashed_data[offset] == 255 or self.stashed_data[offset+1] == 255:
+                        print("Skip empty program")
                         continue
-
                     channel_model: Channel = Channel.objects.get(controller=self.data_model, number=self.stashed_data[offset])
+                    print("Got channel model:", channel_model)
+                    Program.objects.filter(channel=channel_model).delete()
                     try:
-                        program_model: Program = Program.objects.get(channel=channel_model, number=self.stashed_data[offset+1])
+                        program_model: Program = Program.objects.filter(channel=channel_model)[self.stashed_data[offset+1]]
+                        print("Program found in DB")
                     except ObjectDoesNotExist:
-                        program_model: Program = Program(channel=channel_model, number=self.stashed_data[offset+1])
+                        program_model: Program = Program(channel=channel_model)
+                        print(f"Program created because ObjectDoesNotExistsError with id {program_model.id}")
+                    except IndexError:
+                        program_model: Program = Program(channel=channel_model)
+                        print(f"Program created because IndexError with id {program_model.id}")
 
                     program_model.days = ''.join([str(num+1) for num, j in enumerate(list("{0:b}".format(self.stashed_data[offset + 2]))) if bool(int(j))])
                     program_model.weeks, program_model.hour, program_model.minute, program_model.t_min,\
                     program_model.t_max = self.stashed_data[offset+3:offset+8]
 
                     program_model.save()
-
+                    print(f"Program saved with properties: id = {program_model.id}; days = {program_model.days}; weeks = {program_model.weeks}")
                 ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user)
                 self.packet = -1
                 self.stashed_data = []
                 self.blocked = False
+                self.wrong_packets = 0
                 return True
         '''except:
             self.packet = -1
@@ -424,6 +458,10 @@ class ControllerV2Manager:
     def command_get_state_response(self, data, **kwargs) -> bool:
         try:
             data = kwargs["old_data"]
+
+            if data.startswith("*"):
+                return False
+
             s = list(map(try_int, data.split(".")))
             #[print(f"{num}: {i}") for num, i in enumerate(s)]
 
@@ -472,10 +510,10 @@ class ControllerV2Manager:
             ControllerConsumer.send_properties(self.user, self.get_controller_properties(),
                                                is_time_updated=is_time_updated)
 
-            return False
+            return True
         except Exception as ex:
             print(ex)
-            return True
+            return False
 
     def on_connected(self, mqtt: MQTTManager):
         self.command_get_state()

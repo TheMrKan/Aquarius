@@ -76,7 +76,6 @@ class Program(models.Model):
     minute = models.IntegerField(default=0)
     t_min = models.IntegerField(default=0)
     t_max = models.IntegerField(default=0)
-    number = models.IntegerField(default=0)
 
 
     class Meta:
