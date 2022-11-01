@@ -10,6 +10,8 @@ import json
 from typing import List, Tuple
 from main.consumers import ControllerConsumer
 import threading
+import response_handler
+import traceback
 
 
 def try_int(i):
@@ -129,6 +131,7 @@ class ControllerV2Manager:
 
     def __init__(self, host: str, port: int,  controller_user: str, password: str, prefix: str, mqtt_manager: MQTTManager):
         ControllerV2Manager.instances[controller_user] = self
+
         try:
             self.data_model = Controller.objects.get(mqtt_user=controller_user)
         except ObjectDoesNotExist:
@@ -293,27 +296,13 @@ class ControllerV2Manager:
         str_data = ".".join([str(i) for i in chn_settings]) + "." + ".".join([str(i) for i in prgs])
         self.send_command(f"0.{channel.number}.6", str_data)
 
-    def command_get_channels_response(self, data: str, **kwargs) -> bool:
+    def command_get_channels_response(self, content: List[int]) -> bool:
         bytes_in_packet = 35
         total_packets = 27
-        print("Data: ", data)
-        if True:
-            self.blocked = True
-            if not data.startswith("*"):
-                if self.wrong_packets >= 5:
-                    self.packet = -1
-                    self.stashed_data = []
-                    self.blocked = False
-                    print("Error 0")
-                    ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
-                    return True
-                else:
-                    self.wrong_packets += 1
-                    return False
+        print("Content: ", content)
+        try:
 
-            data = data.replace("*", "")
-            data = data.split(".10.11.12.13.12.11.10")[0]
-            parsed_message = list(map(try_int, data.split(".")))
+            parsed_message = content
 
             packet_number = parsed_message[0]
 
@@ -362,8 +351,9 @@ class ControllerV2Manager:
                     channel_model.meaoff_cmax, channel_model.press_on, channel_model.press_off, \
                     _, _, channel_model.season, _, _, _, channel_model.rainsens, channel_model.tempsens, \
                     channel_model.lowlevel, _, _, _, _ = self.stashed_data[offset:offset+20]
+                    print(self.stashed_data[offset:offset+20])
 
-                    channel_model.save()
+                    #channel_model.save()
 
                 total_programs = 80
                 bytes_for_program = 8
@@ -398,13 +388,15 @@ class ControllerV2Manager:
                 self.stashed_data = []
                 self.blocked = False
                 self.wrong_packets = 0
+                self.command_get_state()
                 return True
-        '''except:
+        except Exception as ex:
+            traceback.print_exc()
             self.packet = -1
             self.stashed_data = []
             self.blocked = False
-            ControllerConsumer.send_data_downloaded()
-            return True'''
+            ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
+            return True
         return False
 
     def get_controller_properties(self) -> dict:
@@ -455,14 +447,10 @@ class ControllerV2Manager:
         data = '.'.join([str(i) for i in [minute, hour, second, day, month, year % 100]])
         self.send_command("0.0.1", data)
 
-    def command_get_state_response(self, data, **kwargs) -> bool:
+    def command_get_state_response(self, content) -> bool:
         try:
-            data = kwargs["old_data"]
 
-            if data.startswith("*"):
-                return False
-
-            s = list(map(try_int, data.split(".")))
+            s = [0, 0, 0, 0, 0, 0, 0, 0] + content
             #[print(f"{num}: {i}") for num, i in enumerate(s)]
 
             is_time_updated = False
@@ -476,7 +464,7 @@ class ControllerV2Manager:
             self.data_model.week = bool(s[21])
             self.data_model.nearest_chn = s[23]
             try:
-                    self.data_model.nearest_time = datetime.time(s[24], s[25])
+                self.data_model.nearest_time = datetime.time(s[24], s[25])
             except ValueError:
                 self.data_model.nearest_time = datetime.time(0, 0)
             self.data_model.t1 = s[12]
@@ -507,12 +495,13 @@ class ControllerV2Manager:
                         db_chns[c].state = s
                         db_chns[c].save()
             self.data_model.save()
+
             ControllerConsumer.send_properties(self.user, self.get_controller_properties(),
                                                is_time_updated=is_time_updated)
 
-            return True
+            return False
         except Exception as ex:
-            print(ex)
+            traceback.print_exc()
             return False
 
     def on_connected(self, mqtt: MQTTManager):
@@ -528,11 +517,10 @@ class ControllerV2Manager:
         return check_sum_bytes[0], check_sum_bytes[1]
 
     def handle_message(self, mqtt: MQTTManager, controller_prefix: str, data: str) -> None:
-        if self.last_command in self.command_response_handlers.keys():
-            if self.command_response_handlers[self.last_command](data.replace(".1.2.3.4.3.2.1.", "").replace(".9.8.7.6.7.8.9..", ""), old_data=data):
-                self.last_command = ""
+        response_handler.handle_data(self, data)
 
 
-#MQTT - [aqua_kontr] - .1.2.3.4.3.2.1.18.44.29.3.23.0.0.0.0.0.0.1.0.0.0.0.25.61.0.159.192.168.31.160.1.9.3.13.38.0.0.5.142.127.9.8.7.6.7.8.9..
-#MQTT - [aqua_kontr] - .1.2.3.4.3.2.1.18.45.29.3.23.0.0.0.0.0.0.1.0.0.0.0.25.61.0.159.192.168.31.160.1.9.3.13.37.0.0.5.142.127.9.8.7.6.7.8.9..
-#.1.2.3.4.3.2.1.0.2.6.5.35.60.0.0.5.5.1.1.100.0.0.0.1.1.0.0.0.0.0.121.3.9.2.20.30.127.3.1.12.25.35.2.98.9.8.7.6.7.8.9.9.
+
+# регистрируем обработчики для паттернов данных
+response_handler.DownloadingDataPattern.handle = ControllerV2Manager.command_get_channels_response
+response_handler.PropertiesDataPattern.handle = ControllerV2Manager.command_get_state_response

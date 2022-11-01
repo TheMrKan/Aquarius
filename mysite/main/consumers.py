@@ -32,10 +32,9 @@ class ControllerConsumer(WebsocketConsumer):
         # необходимо, чтобы не появлялось предложение синхронизировать время в случае,
         # если на сервере не успели обновиться данные
         if not is_time_updated:
-            for k in ("hour", "minute"):
+            for k in ("hour", "minute", "second"):
                 if k in properties.keys():
                     del properties[k]
-
 
         if prefix in ControllerConsumer.consumers.keys():
             ControllerConsumer.consumers[prefix].send(text_data=json.dumps(properties))
