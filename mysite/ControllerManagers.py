@@ -37,6 +37,8 @@ class ControllerV2Manager:
     cmd_pattern = ".1.2.3.4.3.2.1.{request_code}.{payload}.{check_sum[0]}.{check_sum[1]}.9.8.7.6.7.8.9.9."
     topic_send = "aqua_smart"
     topic_receive = "aqua_kontr"
+    topic_status = "tele/Aquarius/LWT"
+    topic_send_status = "smart_LWT"
 
     pump_channel_number = 10
     max_programs_for_channel = 14
@@ -145,6 +147,12 @@ class ControllerV2Manager:
                                          )
             self.data_model.save()
 
+        # при инициализации устанавливаем значение 2 (контроллер ни разу не подключался к брокеру)
+        # если при подключении менеджера будет получен топик LWT, то перезаписываем состояние на то, что указано в топике
+        # если не будет получен, значит топика нет, а следовательно контроллер ни разу не подключался к брокеру
+        self.data_model.status = 2
+        self.data_model.save()
+
         for channel_num in range(1, 31):
             try:
                 channel = Channel.objects.get(controller=self.data_model, number=channel_num)
@@ -165,6 +173,7 @@ class ControllerV2Manager:
 
     def subscribe(self, mqtt: MQTTManager) -> None:
         mqtt.subscribe(self.topic_receive, self.handle_message)
+        mqtt.subscribe(self.topic_status, self.handle_status_message)
         mqtt.onConnected = self.on_connected
 
     def send_command(self, request_code: str, payload: str = ""):
@@ -179,6 +188,8 @@ class ControllerV2Manager:
         for i in active_channels:
             self.command_turn_on_channel(i.number, 0)
 
+    def send_status(self, status: bool):
+        self.mqtt_manager.send(self.topic_send_status, str(int(status)))
 
     def wrap_command(self, request_code: str, payload: str) -> str:
         return self.cmd_pattern.format(request_code=request_code, payload=payload,
@@ -404,6 +415,7 @@ class ControllerV2Manager:
         channels_state = [i.state for i in channels]
 
         properties = {
+            "status": self.data_model.status,
             "hour": self.data_model.time.hour,
             "minute": self.data_model.time.minute,
             "second": self.data_model.time.second,
@@ -518,6 +530,12 @@ class ControllerV2Manager:
 
     def handle_message(self, mqtt: MQTTManager, controller_prefix: str, data: str) -> None:
         response_handler.handle_data(self, data)
+
+    def handle_status_message(self, mqtt: MQTTManager, controller_prefix: str, data: str) -> None:
+        print("Handle status data:", data)
+        st = try_int(data)
+        self.data_model.status = int(bool(st))
+        self.data_model.save()
 
 
 
