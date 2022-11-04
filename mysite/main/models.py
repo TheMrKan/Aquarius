@@ -10,6 +10,7 @@ class UserExtension(models.Model):
 
 
 class Controller(models.Model):
+    status = models.IntegerField(default=2)
     mqtt_host = models.CharField(max_length=30, default="")
     mqtt_port = models.CharField(max_length=30, default="")
     mqtt_user = models.CharField(max_length=30, default="")

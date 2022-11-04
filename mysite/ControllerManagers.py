@@ -10,6 +10,8 @@ import json
 from typing import List, Tuple
 from main.consumers import ControllerConsumer
 import threading
+import response_handler
+import traceback
 
 
 def try_int(i):
@@ -35,6 +37,8 @@ class ControllerV2Manager:
     cmd_pattern = ".1.2.3.4.3.2.1.{request_code}.{payload}.{check_sum[0]}.{check_sum[1]}.9.8.7.6.7.8.9.9."
     topic_send = "aqua_smart"
     topic_receive = "aqua_kontr"
+    topic_status = "tele/Aquarius/LWT"
+    topic_send_status = "smart_LWT"
 
     pump_channel_number = 10
     max_programs_for_channel = 14
@@ -129,6 +133,7 @@ class ControllerV2Manager:
 
     def __init__(self, host: str, port: int,  controller_user: str, password: str, prefix: str, mqtt_manager: MQTTManager):
         ControllerV2Manager.instances[controller_user] = self
+
         try:
             self.data_model = Controller.objects.get(mqtt_user=controller_user)
         except ObjectDoesNotExist:
@@ -141,6 +146,12 @@ class ControllerV2Manager:
                                          name=ControllerV2Manager.DEFAULT_NAME_PATTERN.format(user=controller_user)
                                          )
             self.data_model.save()
+
+        # при инициализации устанавливаем значение 2 (контроллер ни разу не подключался к брокеру)
+        # если при подключении менеджера будет получен топик LWT, то перезаписываем состояние на то, что указано в топике
+        # если не будет получен, значит топика нет, а следовательно контроллер ни разу не подключался к брокеру
+        self.data_model.status = 2
+        self.data_model.save()
 
         for channel_num in range(1, 31):
             try:
@@ -162,6 +173,7 @@ class ControllerV2Manager:
 
     def subscribe(self, mqtt: MQTTManager) -> None:
         mqtt.subscribe(self.topic_receive, self.handle_message)
+        mqtt.subscribe(self.topic_status, self.handle_status_message)
         mqtt.onConnected = self.on_connected
 
     def send_command(self, request_code: str, payload: str = ""):
@@ -176,6 +188,8 @@ class ControllerV2Manager:
         for i in active_channels:
             self.command_turn_on_channel(i.number, 0)
 
+    def send_status(self, status: bool):
+        self.mqtt_manager.send(self.topic_send_status, str(int(status)))
 
     def wrap_command(self, request_code: str, payload: str) -> str:
         return self.cmd_pattern.format(request_code=request_code, payload=payload,
@@ -293,27 +307,13 @@ class ControllerV2Manager:
         str_data = ".".join([str(i) for i in chn_settings]) + "." + ".".join([str(i) for i in prgs])
         self.send_command(f"0.{channel.number}.6", str_data)
 
-    def command_get_channels_response(self, data: str, **kwargs) -> bool:
+    def command_get_channels_response(self, content: List[int]) -> bool:
         bytes_in_packet = 35
         total_packets = 27
-        print("Data: ", data)
-        if True:
-            self.blocked = True
-            if not data.startswith("*"):
-                if self.wrong_packets >= 5:
-                    self.packet = -1
-                    self.stashed_data = []
-                    self.blocked = False
-                    print("Error 0")
-                    ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
-                    return True
-                else:
-                    self.wrong_packets += 1
-                    return False
+        print("Content: ", content)
+        try:
 
-            data = data.replace("*", "")
-            data = data.split(".10.11.12.13.12.11.10")[0]
-            parsed_message = list(map(try_int, data.split(".")))
+            parsed_message = content
 
             packet_number = parsed_message[0]
 
@@ -362,8 +362,9 @@ class ControllerV2Manager:
                     channel_model.meaoff_cmax, channel_model.press_on, channel_model.press_off, \
                     _, _, channel_model.season, _, _, _, channel_model.rainsens, channel_model.tempsens, \
                     channel_model.lowlevel, _, _, _, _ = self.stashed_data[offset:offset+20]
+                    print(self.stashed_data[offset:offset+20])
 
-                    channel_model.save()
+                    #channel_model.save()
 
                 total_programs = 80
                 bytes_for_program = 8
@@ -398,13 +399,15 @@ class ControllerV2Manager:
                 self.stashed_data = []
                 self.blocked = False
                 self.wrong_packets = 0
+                self.command_get_state()
                 return True
-        '''except:
+        except Exception as ex:
+            traceback.print_exc()
             self.packet = -1
             self.stashed_data = []
             self.blocked = False
-            ControllerConsumer.send_data_downloaded()
-            return True'''
+            ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
+            return True
         return False
 
     def get_controller_properties(self) -> dict:
@@ -412,6 +415,7 @@ class ControllerV2Manager:
         channels_state = [i.state for i in channels]
 
         properties = {
+            "status": self.data_model.status,
             "hour": self.data_model.time.hour,
             "minute": self.data_model.time.minute,
             "second": self.data_model.time.second,
@@ -455,14 +459,10 @@ class ControllerV2Manager:
         data = '.'.join([str(i) for i in [minute, hour, second, day, month, year % 100]])
         self.send_command("0.0.1", data)
 
-    def command_get_state_response(self, data, **kwargs) -> bool:
+    def command_get_state_response(self, content) -> bool:
         try:
-            data = kwargs["old_data"]
 
-            if data.startswith("*"):
-                return False
-
-            s = list(map(try_int, data.split(".")))
+            s = [0, 0, 0, 0, 0, 0, 0, 0] + content
             #[print(f"{num}: {i}") for num, i in enumerate(s)]
 
             is_time_updated = False
@@ -476,7 +476,7 @@ class ControllerV2Manager:
             self.data_model.week = bool(s[21])
             self.data_model.nearest_chn = s[23]
             try:
-                    self.data_model.nearest_time = datetime.time(s[24], s[25])
+                self.data_model.nearest_time = datetime.time(s[24], s[25])
             except ValueError:
                 self.data_model.nearest_time = datetime.time(0, 0)
             self.data_model.t1 = s[12]
@@ -507,12 +507,13 @@ class ControllerV2Manager:
                         db_chns[c].state = s
                         db_chns[c].save()
             self.data_model.save()
+
             ControllerConsumer.send_properties(self.user, self.get_controller_properties(),
                                                is_time_updated=is_time_updated)
 
-            return True
+            return False
         except Exception as ex:
-            print(ex)
+            traceback.print_exc()
             return False
 
     def on_connected(self, mqtt: MQTTManager):
@@ -528,11 +529,16 @@ class ControllerV2Manager:
         return check_sum_bytes[0], check_sum_bytes[1]
 
     def handle_message(self, mqtt: MQTTManager, controller_prefix: str, data: str) -> None:
-        if self.last_command in self.command_response_handlers.keys():
-            if self.command_response_handlers[self.last_command](data.replace(".1.2.3.4.3.2.1.", "").replace(".9.8.7.6.7.8.9..", ""), old_data=data):
-                self.last_command = ""
+        response_handler.handle_data(self, data)
+
+    def handle_status_message(self, mqtt: MQTTManager, controller_prefix: str, data: str) -> None:
+        print("Handle status data:", data)
+        st = try_int(data)
+        self.data_model.status = int(bool(st))
+        self.data_model.save()
 
 
-#MQTT - [aqua_kontr] - .1.2.3.4.3.2.1.18.44.29.3.23.0.0.0.0.0.0.1.0.0.0.0.25.61.0.159.192.168.31.160.1.9.3.13.38.0.0.5.142.127.9.8.7.6.7.8.9..
-#MQTT - [aqua_kontr] - .1.2.3.4.3.2.1.18.45.29.3.23.0.0.0.0.0.0.1.0.0.0.0.25.61.0.159.192.168.31.160.1.9.3.13.37.0.0.5.142.127.9.8.7.6.7.8.9..
-#.1.2.3.4.3.2.1.0.2.6.5.35.60.0.0.5.5.1.1.100.0.0.0.1.1.0.0.0.0.0.121.3.9.2.20.30.127.3.1.12.25.35.2.98.9.8.7.6.7.8.9.9.
+
+# регистрируем обработчики для паттернов данных
+response_handler.DownloadingDataPattern.handle = ControllerV2Manager.command_get_channels_response
+response_handler.PropertiesDataPattern.handle = ControllerV2Manager.command_get_state_response
