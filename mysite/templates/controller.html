@@ -28,14 +28,17 @@
 
 	function update_data_on_page(properties)
 	{
+		// 1 - активен
 		if (properties["status"] == 1)
 		{
 
 		}
+		// 2 - ни разу не подключался к брокеру
 		else if (properties["status"] == 2)
 		{
 
 		}
+		// 0 (или любые другие значения) - неактивен
 		else
 		{
 
@@ -95,6 +98,23 @@
 		if (properties["channels_meandrs"] != undefined)
 		{
 			channels_meandrs = properties["channels_meandrs"];
+		}
+
+		if (properties["temp1"] != undefined & properties["temp2"] != undefined)
+		{
+			let t1 = properties["temp1"] + '°'
+			if (properties["temp1_active"] != true)
+			{
+				t1 = "<font color='#737372'>" + t1 + "</font>"
+			}
+
+			let t2 = properties["temp2"] + '°'
+			if (properties["temp2_active"] != true)
+			{
+				t2 = "<font color='#737372'>" + t2 + "</font>"
+			}
+
+			document.getElementById("temp_div").innerHTML = t1 +  ' ' + t2
 		}
 
 		if (properties["channels_state"] != undefined)
@@ -422,7 +442,7 @@
 								<div class="imgsm">
 									<img src="{% static 'img/measure.png' %}" width="80%"  alt="">
 								</div>
-								<div class="titlew">{{ cont.t1 }}° {{ cont.t2 }}°</div>
+								<div class="titlew" id="temp_div">Загрузка...</div>
 							</div>
 
 						</div>

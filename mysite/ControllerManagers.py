@@ -425,7 +425,9 @@ class ControllerV2Manager:
             "next_time_hour": self.data_model.nearest_time.hour,
             "next_time_minute": self.data_model.nearest_time.minute,
             "temp1": self.data_model.t1,
+            "temp1_active": self.data_model.t1_active,
             "temp2": self.data_model.t2,
+            "temp2_active": self.data_model.t2_active,
             "temp_amount": self.data_model.t_amount,
             "rain": self.data_model.rain,
             "pause": self.data_model.pause,
@@ -465,6 +467,8 @@ class ControllerV2Manager:
             s = [0, 0, 0, 0, 0, 0, 0, 0] + content
             #[print(f"{num}: {i}") for num, i in enumerate(s)]
 
+            self.data_model.version = s[27]    # сначала получаем версию прошивки, чтобы в зависимости от неё обрабатывать входные данные
+
             is_time_updated = False
             new_time = datetime.time(s[8], s[9], s[10])
             if new_time != self.previous_time:
@@ -479,12 +483,42 @@ class ControllerV2Manager:
                 self.data_model.nearest_time = datetime.time(s[24], s[25])
             except ValueError:
                 self.data_model.nearest_time = datetime.time(0, 0)
-            self.data_model.t1 = s[12]
-            self.data_model.t2 = s[13]
+
+            # прошивки старше 161 версии могут передавать отрицательные температуры
+            # преобразование:
+            # t, при t < 128
+            # t - 256, при t >= 128
+            # если приходит -100, значит датчик не активен. Необходимо устанавливать температуру 20, и на странице выводить температуру другим цветом
+            # t1_active и t2_active показывают, активны ли датчики
+            if self.data_model.version < 161:
+                self.data_model.t1 = s[12]
+                self.data_model.t2 = s[13]
+
+                # у прошивок младше 161 нет возможности понять, работает ли датчик, поэтому всегда показываем, что активен
+                self.data_model.t1_active = True
+                self.data_model.t2_active = True
+
+            else:
+                self.data_model.t1 = s[12] if s[12] < 128 else s[12] - 256
+                self.data_model.t2 = s[13] if s[13] < 128 else s[13] - 256
+
+                # проверяем, активен ли датчик 1
+                if self.data_model.t1 == -100:
+                    self.data_model.t1 = 20    # если не активен, то необходимо отображать температуру 20
+                    self.data_model.t1_active = False
+                else:
+                    self.data_model.t1_active = True
+                # проверяем, активен ли датчик 2
+                if self.data_model.t2 == -100:
+                    self.data_model.t2 = 20    # если не активен, то необходимо отображать температуру 20
+                    self.data_model.t2_active = False
+                else:
+                    self.data_model.t2_active = True
+
             self.data_model.t_amount = s[19]
             self.data_model.rain = bool(s[14])
             self.data_model.pause = bool(s[26])
-            self.data_model.version = s[27]
+
             self.data_model.ip = f"{s[28]}.{s[29]}.{s[30]}.{s[31]}"
             self.data_model.esp_v = f"{s[32]}.{s[33]}.{s[34]}"
             esp_d = BitArray(uint=s[35], length=8)[::-1]
