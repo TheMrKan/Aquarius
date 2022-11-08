@@ -62,7 +62,7 @@
 				 <div class="mhead">
 					<a target="_blank" href="https://hi-garden.ru/" class="mhead__logo xhref">Hi-Garden</a>
 					<div class="mhead__title">Ручное включение</div>
-					<a href="javascript:save()" class="mhead__manual xhref">&#10006;</a>
+					<a href="javascript:history.back()" class="mhead__manual xhref">&#10006;</a>
 				 </div>
 			
 				</div>
@@ -128,7 +128,7 @@
 
 						</div>
 
-						<div class="status__row">
+						<div class="status__row" {% if hide_channels_selector %} style="height: 0;" {% endif %}>
 							<div class="status__column">
 								<div id="chns_selector_0" class="titlef folderoff">
 									<a onClick="javascript:set_channels(0, false);" role="button" href="#" class="myxhref">Каналы 1-10<br></a>
@@ -259,7 +259,7 @@
 						<div class="status__row">
 
 							<div class="status__column">
-								<div class="titlew">Esp: 1.9.3</div>
+								<div class="titlew">Esp: {{ cont.esp_v }}</div>
 							</div>
 
 							<div class="status__column">
@@ -267,7 +267,7 @@
 							</div>
 
 							<div class="status__column">
-								<div class="titlew">Avr: 159</div>
+								<div class="titlew">Avr: {{ cont.version }}</div>
 							</div>
 
 						</div> 
