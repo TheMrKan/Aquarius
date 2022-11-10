@@ -153,6 +153,8 @@ class ControllerV2Manager:
         self.data_model.status = 2
         self.data_model.save()
 
+        self.is_user_connected = False
+
         for channel_num in range(1, 31):
             try:
                 channel = Channel.objects.get(controller=self.data_model, number=channel_num)
@@ -170,6 +172,12 @@ class ControllerV2Manager:
             "8.8.8.8.8.8.8.8": self.command_get_state_response,
             "0.0.8": self.command_get_channels_response,
         }
+
+    def unload(self) -> None:
+        self.send_status(False)
+        self.mqtt_manager.unsubscribe(self.topic_receive)
+        self.mqtt_manager.unsubscribe(self.topic_status)
+        del self
 
     def subscribe(self, mqtt: MQTTManager) -> None:
         mqtt.subscribe(self.topic_receive, self.handle_message)
@@ -189,7 +197,8 @@ class ControllerV2Manager:
             self.command_turn_on_channel(i.number, 0)
 
     def send_status(self, status: bool):
-        self.mqtt_manager.send(self.topic_send_status, str(int(status)))
+        self.is_user_connected = status
+        self.mqtt_manager.send(self.topic_send_status, str(int(status)), retain=True)
 
     def wrap_command(self, request_code: str, payload: str) -> str:
         return self.cmd_pattern.format(request_code=request_code, payload=payload,
@@ -277,8 +286,8 @@ class ControllerV2Manager:
         prg.weeks = 3
         prg.hour = 0
         prg.minute = 0
-        prg.t_min = 60
-        prg.t_max = 120
+        prg.t_min = 20
+        prg.t_max = 40
         prg.save()
         self.command_send_channel(channel_num)
         return prg
@@ -372,28 +381,32 @@ class ControllerV2Manager:
                     offset = bytes_for_program * i + 240
                     print(offset)
                     print(f"Processing channel {self.stashed_data[offset]}; program {self.stashed_data[offset+1]}")
-                    if self.stashed_data[offset] == 255 or self.stashed_data[offset+1] == 255:
-                        print("Skip empty program")
-                        continue
-                    channel_model: Channel = Channel.objects.get(controller=self.data_model, number=self.stashed_data[offset])
-                    print("Got channel model:", channel_model)
-                    Program.objects.filter(channel=channel_model).delete()
                     try:
-                        program_model: Program = Program.objects.filter(channel=channel_model)[self.stashed_data[offset+1]]
-                        print("Program found in DB")
-                    except ObjectDoesNotExist:
-                        program_model: Program = Program(channel=channel_model)
-                        print(f"Program created because ObjectDoesNotExistsError with id {program_model.id}")
-                    except IndexError:
-                        program_model: Program = Program(channel=channel_model)
-                        print(f"Program created because IndexError with id {program_model.id}")
+                        if self.stashed_data[offset] == 255 or self.stashed_data[offset+1] == 255:
+                            print("Skip empty program")
+                            continue
+                        channel_model: Channel = Channel.objects.get(controller=self.data_model, number=self.stashed_data[offset])
+                        print("Got channel model:", channel_model)
+                        Program.objects.filter(channel=channel_model).delete()
+                        try:
+                            program_model: Program = Program.objects.filter(channel=channel_model)[self.stashed_data[offset+1]]
+                            print("Program found in DB")
+                        except ObjectDoesNotExist:
+                            program_model: Program = Program(channel=channel_model)
+                            print(f"Program created because ObjectDoesNotExistsError with id {program_model.id}")
+                        except IndexError:
+                            program_model: Program = Program(channel=channel_model)
+                            print(f"Program created because IndexError with id {program_model.id}")
 
-                    program_model.days = ''.join([str(num+1) for num, j in enumerate(list("{0:b}".format(self.stashed_data[offset + 2]))) if bool(int(j))])
-                    program_model.weeks, program_model.hour, program_model.minute, program_model.t_min,\
-                    program_model.t_max = self.stashed_data[offset+3:offset+8]
+                        program_model.days = ''.join([str(num+1) for num, j in enumerate(list("{0:b}".format(self.stashed_data[offset + 2]))) if bool(int(j))])
+                        program_model.weeks, program_model.hour, program_model.minute, program_model.t_min,\
+                        program_model.t_max = self.stashed_data[offset+3:offset+8]
 
-                    program_model.save()
-                    print(f"Program saved with properties: id = {program_model.id}; days = {program_model.days}; weeks = {program_model.weeks}")
+                        program_model.save()
+                        print(f"Program saved with properties: id = {program_model.id}; days = {program_model.days}; weeks = {program_model.weeks}")
+                    except Exception as ex1:
+                        traceback.print_exc()
+                        continue
                 ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user)
                 self.packet = -1
                 self.stashed_data = []
@@ -563,7 +576,8 @@ class ControllerV2Manager:
         return check_sum_bytes[0], check_sum_bytes[1]
 
     def handle_message(self, mqtt: MQTTManager, controller_prefix: str, data: str) -> None:
-        response_handler.handle_data(self, data)
+        if self.is_user_connected:
+            response_handler.handle_data(self, data)
 
     def handle_status_message(self, mqtt: MQTTManager, controller_prefix: str, data: str) -> None:
         print("Handle status data:", data)

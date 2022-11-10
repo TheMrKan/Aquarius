@@ -19,11 +19,11 @@ class MQTTManager:
     connected = False
     trying = 2
 
-    def send(self, topic, data):
-        if self.client == None:
+    def send(self, topic, data, retain=False):
+        if self.client is None:
             return
         #print(f"MQTT: Send to [{topic}]: {data}")
-        self.client.publish(self.prefix + topic, data)
+        self.client.publish(self.prefix + topic, data, retain=retain)
 
     def on_disconnect(self, *args):
         self.client.on_message = lambda: True
@@ -31,6 +31,10 @@ class MQTTManager:
     def subscribe(self, topic, func):
         self.topicHandlers[topic] = func
         self.client.subscribe(self.prefix + topic)
+
+    def unsubscribe(self, topic):
+        del self.topicHandlers[topic]
+        self.client.unsubscribe(self.prefix + topic)
 
     def on_connected(self, client, userdata, flags, rc):
         if self.trying > 0:
