@@ -57,9 +57,36 @@ def index(request):
     request.user.userextension.save()
     return response
 
+
+@login_required
+def remove_controller(request, controller_username: str):
+    try:
+        saved_controllers = request.user.userextension.saved_controllers
+    except:
+        return
+
+    if saved_controllers is None:
+        saved_controllers = []
+    else:
+        saved_controllers = json.loads(saved_controllers)
+
+    to_remove = []
+    for n, i in enumerate(saved_controllers):
+        if controller_username.lower() == i[0].lower():
+            to_remove.append(n)
+
+    for i in to_remove:
+        del saved_controllers[i]
+
+    request.user.userextension.saved_controllers = json.dumps(saved_controllers)
+    request.user.userextension.save()
+
+    return redirect("/")
+
 @login_required
 def reports(request):
     return render(request, 'reports.html')
+
 
 @login_required
 def pause(request, mqtt_user, minutes: int = -1):

@@ -115,7 +115,7 @@
                                             {% if controllers|length > 0 %}
                                             <ul>
                                                 {% for cont in controllers %}
-                                                <li style="list-style-type: decimal;  margin-bottom: 30px;"><a style="color: #FFFFBB" href="controllers/{{ cont.mqtt_user }}">{{ cont.name }}</a><span style="margin-left: 100px;"><a style="color: red" href="">&#9003;</a></span></li>
+                                                <li style="list-style-type: decimal;  margin-bottom: 30px;"><a style="color: #FFFFBB" href="controllers/{{ cont.mqtt_user }}">{{ cont.name }}</a><span style="margin-left: 100px;"><a style="color: red" href="{% url 'remove_controller' cont.mqtt_user %}">&#9003;</a></span></li>
                                                 {% endfor %}
                                             </ul>
                                             {% else %}
