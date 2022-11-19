@@ -125,6 +125,8 @@ def manual_activation_selector(request, mqtt_user, turn_off_all=False):
     channels = Channel.objects.filter(controller__mqtt_user=mqtt_user)
     cont = Controller.objects.get(mqtt_user=mqtt_user)
 
+    hide_channels_selector: bool = cont.version < 200
+
     instance: ControllerV2Manager = ControllerV2Manager.get_instance(mqtt_user)
     instance.command_get_state()
     if turn_off_all:
@@ -140,6 +142,7 @@ def manual_activation_selector(request, mqtt_user, turn_off_all=False):
                       'channels_state_json': json.dumps([i.state for i in channels]),
                       'channels_names_json': json.dumps([i.name for i in channels]),
                       "cont": cont,
+                      "hide_channels_selector": hide_channels_selector
                   })
 
 @login_required
@@ -151,6 +154,8 @@ def channel_naming(request, mqtt_user):
 
     controller: Controller = Controller.objects.get(mqtt_user=mqtt_user)
     channels = Channel.objects.filter(controller=controller)
+
+    hide_channels_selector: bool = controller.version < 200
 
     if request.method == "POST":
         data = request.POST.dict()
@@ -166,7 +171,8 @@ def channel_naming(request, mqtt_user):
     return render(request, "channel_naming.html", {
         "cont": controller,
         "mqtt_user": mqtt_user,
-        "channels_names_json": [i.name for i in channels]
+        "channels_names_json": [i.name for i in channels],
+        "hide_channels_selector": hide_channels_selector
     })
 
 @login_required

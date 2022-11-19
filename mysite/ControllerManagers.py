@@ -333,7 +333,6 @@ class ControllerV2Manager:
                     self.packet = -1
                     self.stashed_data = []
                     self.blocked = False
-                    print("Error 1")
                     ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
                     return True
                 else:
@@ -367,13 +366,24 @@ class ControllerV2Manager:
                     except ObjectDoesNotExist:
                         channel_model: Channel = Channel(controller=self.data_model, number=i+1, name=f"Канал {i+1}")
 
-                    channel_model.temp_min, channel_model.temp_max, channel_model.meandr_on, channel_model.meaoff_cmin, \
-                    channel_model.meaoff_cmax, channel_model.press_on, channel_model.press_off, \
-                    _, _, channel_model.season, _, _, _, channel_model.rainsens, channel_model.tempsens, \
-                    channel_model.lowlevel, _, _, _, _ = self.stashed_data[offset:offset+20]
+                    Program.objects.filter(channel=channel_model).delete()
+
+                    c_properties = self.stashed_data[offset:offset+20]
+                    channel_model.temp_min = c_properties[0]
+                    channel_model.temp_max = c_properties[1]
+                    channel_model.meandr_on = c_properties[2]
+                    channel_model.meaoff_cmin = c_properties[3]
+                    channel_model.meaoff_cmax = c_properties[4]
+                    channel_model.press_on = c_properties[5]
+                    channel_model.press_off = c_properties[6]
+                    channel_model.season = c_properties[9]
+                    channel_model.rainsens = bool(c_properties[13])
+                    channel_model.tempsens = c_properties[14]
+                    channel_model.lowlevel = bool(c_properties[15])
+
                     print(self.stashed_data[offset:offset+20])
 
-                    #channel_model.save()
+                    channel_model.save()
 
                 total_programs = 80
                 bytes_for_program = 8
@@ -382,12 +392,11 @@ class ControllerV2Manager:
                     print(offset)
                     print(f"Processing channel {self.stashed_data[offset]}; program {self.stashed_data[offset+1]}")
                     try:
-                        if self.stashed_data[offset] == 255 or self.stashed_data[offset+1] == 255:
+                        if 255 in self.stashed_data[offset:offset+bytes_for_program]:
                             print("Skip empty program")
                             continue
                         channel_model: Channel = Channel.objects.get(controller=self.data_model, number=self.stashed_data[offset])
                         print("Got channel model:", channel_model)
-                        Program.objects.filter(channel=channel_model).delete()
                         try:
                             program_model: Program = Program.objects.filter(channel=channel_model)[self.stashed_data[offset+1]]
                             print("Program found in DB")
