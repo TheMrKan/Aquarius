@@ -92,7 +92,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="status__rowc">
+                                    <div class="status__rowc" style="margin-bottom: 30px;">
                                         <div class="status__column">
                                             <div class="titlew">e-mail:</div>
                                         </div>
@@ -101,8 +101,13 @@
                                         </div>
                                     </div>
 
-                                    <div class="status__row" style="width: 40%;">
-                                        <button type="submit" class="btn btn-primary" >Добавить</button>
+                                    <div class="status__row" style="margin-bottom: 30px;">
+                                        <div class="status__column">
+                                            <button type="submit" class="btn btn-primary" style="margin-bottom: 15px;">Добавить</button>
+                                        </div>
+                                        <div class="status__column">
+                                            <div class="titlew">Чтобы удалить запись,<br>нажмите <span style="color: red">&#9003;</span></div>
+                                        </div>
                                     </div>
 
                                     <div class="status__row">
@@ -110,7 +115,7 @@
                                             {% if controllers|length > 0 %}
                                             <ul>
                                                 {% for cont in controllers %}
-                                                <li style="list-style-type: decimal;"><a style="color: #FFFFBB" href="controllers/{{ cont.mqtt_user }}">{{ cont.name }}</a><br>&nbsp;</li>
+                                                <li style="list-style-type: decimal;  margin-bottom: 30px;"><a style="color: #FFFFBB" href="controllers/{{ cont.mqtt_user }}">{{ cont.name }}</a><span style="margin-left: 100px;"><a style="color: red" href="">&#9003;</a></span></li>
                                                 {% endfor %}
                                             </ul>
                                             {% else %}
