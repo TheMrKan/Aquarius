@@ -5,7 +5,7 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1.0, user-scalable=0">
 	<meta name="format-detection" content="telephone=no">
-	<title>Ручное управление</title>
+	<title>Пауза в поливе</title>
 	<!--<link rel="stylesheet" href="css/style.css">-->
 	{% load static %}
 	<link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -20,7 +20,7 @@
 				 <div class="mhead">
 					<a target="_blank" href="https://hi-garden.ru/" class="mhead__logo xhref">Hi-Garden</a>
 					<div class="mhead__title">Пауза в поливе</Main></div>
-					<a target="_blank" href="https://hi-garden.ru/aqua2-manual" class="mhead__manual xhref">&#8942;</a>
+					<a href="javascript:history.back()" class="mhead__manual xhref">&#10006;</a>
 				 </div>
 			
 				</div>
@@ -39,7 +39,9 @@
 
 							<div class="status__column">
 								<div class="titlew">
-									<br>Aquarius 294<br>Ягодное, Энергетиков, 13
+									<div class="titlew" style="margin-top: 20px; margin-bottom: 0px;">
+										Aquarius {{ mqtt_user }}
+									</div>
 								</div>
 							</div>
 							
@@ -168,7 +170,7 @@
 						<div class="status__row">
 
 							<div class="status__column">
-								<div class="titlew">Esp: 1.9.3</div>
+								<div class="titlew">Esp: {{ cont.esp_v }}</div>
 							</div>
 
 							<div class="status__column">
@@ -176,7 +178,7 @@
 							</div>
 
 							<div class="status__column">
-								<div class="titlew">Avr: 159</div>
+								<div class="titlew">Avr: {{ cont.version }}</div>
 							</div>
 
 						</div> 
