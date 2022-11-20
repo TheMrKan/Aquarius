@@ -125,11 +125,6 @@
 			set_channels_status();
 		}
 
-		if (properties["name"] != undefined & !(document.activeElement === document.getElementById("controller_name")))
-		{
-			document.getElementById("controller_name").value = properties["name"].toString();
-		}
-
 		if (hidden_channel == "" & {% if hide_channels_selector %}true{% else %}false{% endif %})
 		{
 			document.getElementById("pump_div").parentElement.style = "height: 0;"
@@ -252,7 +247,7 @@
 								<div class="titlew" style="margin-top: 20px; margin-bottom: 0px;">
 									Aquarius {{ mqtt_user }}
 								</div>
-								<input id="controller_name" type="text" style="width: 100%;" name="contr_name" value="Загрузка..." />
+								<input id="controller_name" type="text" style="width: 100%;" name="contr_name" value="{{ name }}" />
 							</div>
 
 							<div class="status__column">
