@@ -6,7 +6,6 @@ from django.contrib.auth.models import User
 class UserExtension(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    saved_controllers = models.CharField(max_length=100, default="[]")
 
 
 class Controller(models.Model):
@@ -39,18 +38,16 @@ class Controller(models.Model):
     esp_errors = models.BooleanField(default=False)
     pressure = models.FloatField(default=0)
     stream = models.FloatField(default=0)
-    name = models.CharField(max_length=64, default="Controller")
-
 
     def __str__(self):
-        return self.name
+        return self.mqtt_user
 
 
 class Channel(models.Model):
     id = models.AutoField(primary_key=True)
     number = models.IntegerField(default=1)
     name = models.CharField(max_length=64, default="Канал")
-    controller = models.ForeignKey('Controller', on_delete=models.CASCADE)
+    controller: Controller = models.ForeignKey('Controller', on_delete=models.CASCADE)
     state = models.BooleanField(default=False)
     season = models.IntegerField(default=100)
     temp_min = models.IntegerField(default=8)
@@ -74,7 +71,7 @@ class Program(models.Model):
     id = models.AutoField(primary_key=True)
     channel = models.ForeignKey('Channel', on_delete=models.CASCADE)
     days = models.CharField(max_length=7, default='')
-    weeks = models.SmallIntegerField(default=0)
+    weeks: int = models.SmallIntegerField(default=0)
     hour = models.IntegerField(default=0)
     minute = models.IntegerField(default=0)
     t_min = models.IntegerField(default=0)
@@ -95,3 +92,17 @@ class Program(models.Model):
         return f"{self.channel.controller.name} / {self.channel.number} / ({self.days}|{self.hour}:{self.minute})"
 
 
+class UserControllerPreferences(models.Model):
+
+    user_extension = models.ForeignKey(UserExtension, on_delete=models.CASCADE)
+    controller = models.ForeignKey(Controller, on_delete=models.SET_NULL, null=True)
+
+    mqtt_password = models.CharField(max_length=32, default="")
+    verbous_name = models.CharField(max_length=32, default="Контроллер")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user_extension', 'controller'], name='unique_user_controller_combination'
+            )
+        ]

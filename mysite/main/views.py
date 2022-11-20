@@ -8,6 +8,7 @@ import time
 from ControllerManagers import ControllerV2Manager, LimitOfProgramsException
 from main.consumers import ControllerConsumer
 import json
+import user_tools as utools
 
 DAYS = {'monday': 'Понедельник',
         'tuesday': 'Вторник',
@@ -20,41 +21,24 @@ DAYS = {'monday': 'Понедельник',
 
 @login_required
 def index(request):
-    try:
-        saved_controllers = request.user.userextension.saved_controllers
-    except:
-        uex = UserExtension(user=request.user, saved_controllers="[]")
-        uex.save()
-        saved_controllers = "[]"
-    if saved_controllers is None:
-        saved_controllers = []
-    else:
-        saved_controllers = json.loads(saved_controllers)
+    available_controllers = utools.get_available_controllers(request.user)
+
     if request.method == "POST":
         values = request.POST.dict()
         if all(k in values.keys() for k in ("server", "port", "user", "password", "prefix")):
 
-            if not [True for c in saved_controllers if c[0] == values["user"]]:    # исключаем возможность повторного добавления одного и того-же контроллера
+            if not values["user"] in available_controllers.keys():    # исключаем возможность повторного добавления одного и того-же контроллера
                 print({k: values[k] for k in ["cname", "email"] if k in values.keys()})
                 if ControllerV2Manager.add(values["user"], values["password"],
                                            host=values["server"], port=int(values["port"]), prefix=values["prefix"],
-                                           **{k: values[k] for k in ["cname", "email"] if k in values.keys()}):
-                    saved_controllers.append([values["user"], values["password"]])
-    controllers = []
-    _remove = []
-    for c in saved_controllers:
-        if ControllerV2Manager.check_auth(c[0], c[1]):
-            controllers.append(ControllerV2Manager.get_instance(c[0]).data_model)
-        else:
-            _remove.append(c)
-    [saved_controllers.remove(c) for c in _remove]
+                                           **{k: values[k] for k in ["email"] if k in values.keys()}):
+                    utools.add_controller(request.user, values["user"], values["password"], values.get("cname", f"Контроллер {values['user']}"))
+    print(available_controllers)
     response = render(request, 'index.html',
                     {
-                        'controllers': controllers
+                        'controllers': available_controllers
                     })
 
-    request.user.userextension.saved_controllers = json.dumps(saved_controllers)
-    request.user.userextension.save()
     return response
 
 
@@ -90,7 +74,7 @@ def reports(request):
 
 @login_required
 def pause(request, mqtt_user, minutes: int = -1):
-    if not ControllerV2Manager.check_auth(mqtt_user=mqtt_user, user=request.user):
+    if not utools.is_authentificated(request.user, mqtt_user):
         return redirect("/")
     if ControllerV2Manager.check_block(mqtt_user):
         return redirect("controller", mqtt_user)
@@ -113,7 +97,7 @@ def pause(request, mqtt_user, minutes: int = -1):
 
 @login_required
 def manual_activation(request, mqtt_user, chn, minutes=-1):
-    if not ControllerV2Manager.check_auth(mqtt_user=mqtt_user, user=request.user):
+    if not utools.is_authentificated(request.user, mqtt_user):
         return redirect("/")
     if ControllerV2Manager.check_block(mqtt_user):
         return redirect("controller", mqtt_user)
@@ -144,7 +128,7 @@ def manual_activation(request, mqtt_user, chn, minutes=-1):
 
 @login_required
 def manual_activation_selector(request, mqtt_user, turn_off_all=False):
-    if not ControllerV2Manager.check_auth(mqtt_user=mqtt_user, user=request.user):
+    if not utools.is_authentificated(request.user, mqtt_user):
         return redirect("/")
     if ControllerV2Manager.check_block(mqtt_user):
         return redirect("controller", mqtt_user)
@@ -174,7 +158,7 @@ def manual_activation_selector(request, mqtt_user, turn_off_all=False):
 
 @login_required
 def channel_naming(request, mqtt_user):
-    if not ControllerV2Manager.check_auth(mqtt_user=mqtt_user, user=request.user):
+    if not utools.is_authentificated(request.user, mqtt_user):
         return redirect("/")
     if ControllerV2Manager.check_block(mqtt_user):
         return redirect("controller", mqtt_user)
@@ -204,7 +188,7 @@ def channel_naming(request, mqtt_user):
 
 @login_required
 def controller(request, mqtt_user):
-    if not ControllerV2Manager.check_auth(mqtt_user=mqtt_user, user=request.user):
+    if not utools.is_authentificated(request.user, mqtt_user):
         return redirect("/")
 
 
@@ -279,71 +263,22 @@ def controller(request, mqtt_user):
                       'channels_names_json': json.dumps([i.name for i in lines]),
                       "hide_channels_selector": hide_channels_selector,
                       "hide_humidity": hide_humidity,
-                      "hidden_channel": hidden_channel
+                      "hidden_channel": hidden_channel,
+                      "name": utools.get_controller_name(request.user, mqtt_user)
                     })
 
+
 @login_required
-def controller_day(request, mqtt_user, day):
-    if not ControllerV2Manager.check_auth(mqtt_user=mqtt_user, user=request.user):
-        return redirect("/")
-    def get_m(t):
-        out = t // 2
-        if t % 2 > 0:
-            out += 1
-        return out
-
-    def get_time(h, m, t):
-        start = [h, get_m(m)]
-        stop = [h + t // 60, get_m((m + t % 60) % 60)]
-        stop[0] += (m + t % 60) // 60
-        return start, stop
-
-    channels = Channel.objects.filter(controller__mqtt_user=mqtt_user)
-    lines = []
-    for i in range(len(channels)):
-        lines.append([])
-        for j in range(24):
-            lines[i].append([])
-            for g in range(30):
-                lines[i][j].append(0)
-    day_num = list(DAYS.keys()).index(day) + 1
-    programs = Program.objects.filter(channel__controller__mqtt_user=mqtt_user, days__contains=str(day_num))
-
-
-    for p in programs:
-        start, stop = get_time(p.hour, p.minute, p.t_max)
-        if (p.minute + (p.t_max % 60)) % 2 > 0:
-            stop[1] += 1
-        for h in range(0, 24):
-            for m in range(0, 30):
-                if h == start[0] and m >= start[1] and not start[0] == stop[0]:
-                    if lines[p.channel.id-1][h][m] == 0:
-                        lines[p.channel.id-1][h][m] = 1
-                elif start[0] < h < stop[0]:
-                    if lines[p.channel.id-1][h][m] == 0:
-                        lines[p.channel.id-1][h][m] = 1
-                elif h == stop[0] and m <= stop[1]:
-                    if lines[p.channel.id-1][h][m] == 0:
-                        lines[p.channel.id-1][h][m] = 1
-
-    return render(request, 'controller_day.html',
-                  {
-                      'mqtt_user': mqtt_user,
-                      'day': DAYS[day],
-                      'hours_total': [i for i in range(24)],
-                      'lines_day': lines
-                   })
-
-@login_required()
 def channels(request, mqtt_user):
-    if not ControllerV2Manager.check_auth(mqtt_user=mqtt_user, user=request.user):
+    if not utools.is_authentificated(request.user, mqtt_user):
         return redirect("/")
 
     channels = Channel.objects.filter(controller__mqtt_user=mqtt_user)
 
-@login_required()
+
+@login_required
 def program(request, mqtt_user, chn, prg_id):
-    if not ControllerV2Manager.check_auth(mqtt_user=mqtt_user, user=request.user):
+    if not utools.is_authentificated(request.user, mqtt_user):
         return redirect("/")
     if ControllerV2Manager.check_block(mqtt_user):
         return redirect("controller", mqtt_user)
@@ -388,9 +323,10 @@ def program(request, mqtt_user, chn, prg_id):
                       "odd_week": weeks[1]
                   })
 
+
 @login_required
 def pump(request, mqtt_user):
-    if not ControllerV2Manager.check_auth(mqtt_user=mqtt_user, user=request.user):
+    if not utools.is_authentificated(request.user, mqtt_user):
         return redirect("/")
     if ControllerV2Manager.check_block(mqtt_user):
         return redirect("controller", mqtt_user)
@@ -419,9 +355,10 @@ def pump(request, mqtt_user):
                       "vmax": str(vmax).replace(",", ".")
                   })
 
+
 @login_required
 def channel(request, mqtt_user, chn, create_prg=False):
-    if not ControllerV2Manager.check_auth(mqtt_user=mqtt_user, user=request.user):
+    if not utools.is_authentificated(request.user, mqtt_user):
         return redirect("/")
     if ControllerV2Manager.check_block(mqtt_user):
         return redirect("controller", mqtt_user)

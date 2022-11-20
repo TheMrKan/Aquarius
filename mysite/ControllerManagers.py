@@ -108,28 +108,12 @@ class ControllerV2Manager:
             return True
 
     @staticmethod
-    def check_auth(mqtt_user: str = "", password: str = "", user: User = None) -> bool:
-        if user is not None:
-            try:
-                saved_controllers = user.userextension.saved_controllers
-            except:
-                uex = UserExtension(user=user, saved_controllers="[]")
-                uex.save()
-                saved_controllers = "[]"
-                return False
-            if saved_controllers is None:
-                saved_controllers = []
-            else:
-                saved_controllers = json.loads(saved_controllers)
-            s_cont = [c for c in saved_controllers if c[0] == mqtt_user]
-            if len(s_cont) > 0:
-                return ControllerV2Manager.check_auth(s_cont[0][0], s_cont[0][1])
-        else:
-            try:
-                data_model = Controller.objects.get(mqtt_user=mqtt_user, mqtt_password=password)
-            except ObjectDoesNotExist:
-                return False
-            return data_model is not None and data_model.mqtt_user == mqtt_user and data_model.mqtt_password == password
+    def check_auth(mqtt_user: str = "", password: str = "") -> bool:
+        try:
+            data_model = Controller.objects.get(mqtt_user=mqtt_user, mqtt_password=password)
+        except ObjectDoesNotExist:
+            return False
+        return data_model is not None and data_model.mqtt_user == mqtt_user and data_model.mqtt_password == password
 
     def __init__(self, host: str, port: int,  controller_user: str, password: str, prefix: str, mqtt_manager: MQTTManager):
         ControllerV2Manager.instances[controller_user] = self
@@ -463,7 +447,6 @@ class ControllerV2Manager:
             "esp_errors": self.data_model.esp_errors,
             "pressure": self.data_model.pressure,
             "stream": self.data_model.stream,
-            "name": self.data_model.name,
             "channels_state": channels_state,
             "pump_state": self.get_pump_state(),
             "channels_meandrs": [i.meaoff_cmin != 0 or i.meaoff_cmax != 0 for i in channels],
@@ -471,9 +454,6 @@ class ControllerV2Manager:
 
         return properties
 
-    def set_name(self, name: str):
-        self.data_model.name = name
-        self.data_model.save()
 
     def command_get_state(self) -> None:
         self.send_command("8.8.8.8.8.8.8.8")

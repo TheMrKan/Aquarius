@@ -1,5 +1,6 @@
 import json
 from channels.generic.websocket import WebsocketConsumer
+import user_tools
 
 
 class ControllerConsumer(WebsocketConsumer):
@@ -48,6 +49,8 @@ class ControllerConsumer(WebsocketConsumer):
     def receive(self, text_data=None, bytes_data=None):
         from ControllerManagers import ControllerV2Manager
 
+        print()
+
         json_data = json.loads(text_data)
         if "mqtt_user" not in json_data.keys() or "command" not in json_data:
             self.send(text_data=json.dumps({'error': "invalid syntax"}))
@@ -68,7 +71,5 @@ class ControllerConsumer(WebsocketConsumer):
         elif command == "get_properties":
             instance.command_get_state()
         elif command == "set_name" and "data" in json_data.keys():
-            instance.set_name(json_data["data"])
-
-
+            user_tools.set_controller_name(self.scope['user'], mqtt_user, json_data["data"])
 
