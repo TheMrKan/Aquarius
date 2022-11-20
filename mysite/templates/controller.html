@@ -268,7 +268,7 @@
 
 						<div class="status__row" style="height: 80px;">
 							<div class="status__column">
-								<button type="button" onclick="document.location='{% url 'channel_naming' mqtt_user %}'" name="chname" form="main_form">Названия<br>каналов</button>
+								<button type="button" onclick="document.location='{% url 'channel_naming' mqtt_user %}'" name="chname" form="main_form"><img src="{% static 'img/pencnote.png' %}" alt="Название каналов" title="Название каналов"></button>
 							</div>
 
 							<div class="status__column">
@@ -277,7 +277,7 @@
 							</div>
 
 							<div class="status__column">
-								<button type="button" onclick="document.location='{% url 'pause' mqtt_user %}'"><img src="{% static 'img/pause.png' %}" alt="Пауза" title="Пауза"></button>
+								<button type="button" onclick="document.location='{% url 'pause' mqtt_user %}'"><img src="{% static 'img/playpause.png' %}" alt="Пауза" title="Пауза"></button>
 							</div>
 
 							<div class="status__column">
