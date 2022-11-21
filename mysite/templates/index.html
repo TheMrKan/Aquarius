@@ -12,6 +12,16 @@
     <link rel="icon" href="{% static 'img/favicon.ico' %}" type="image/x-icon">
 </head>
 <body>
+    <script>
+        pattern = "{% url 'remove_controller' 'replace' %}"
+        function delete_controller(mqtt_user, name)
+        {
+            if (confirm("Вы действительно хотите удалить '" + name + "'?"))
+            {
+                window.location.replace(pattern.replace('replace', mqtt_user))
+            }
+        }
+    </script>
     <div class="wrapper">
         <div class="page">
             <div class="page">
@@ -115,7 +125,7 @@
                                             {% if controllers|length > 0 %}
                                             <ul>
                                                 {% for mqtt_user, name in controllers.items %}
-                                                <li style="list-style-type: decimal;  margin-bottom: 30px;"><a style="color: #FFFFBB" href="controllers/{{ mqtt_user }}">{{ name }}</a><span style="margin-left: 100px;"><a style="color: red" href="{% url 'remove_controller' mqtt_user %}">&#9003;</a></span></li>
+                                                <li style="list-style-type: decimal;  margin-bottom: 30px;"><a style="color: #FFFFBB" href="controllers/{{ mqtt_user }}">{{ name }}</a><span style="margin-left: 100px;"><a style="color: red" onclick="javascript:delete_controller('{{mqtt_user}}', '{{name}}')" href="#">&#9003;</a></span></li>
                                                 {% endfor %}
                                             </ul>
                                             {% else %}

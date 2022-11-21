@@ -64,7 +64,7 @@ class Channel(models.Model):
     tempsens = models.IntegerField(default=1)
 
     def __str__(self):
-        return f"{self.controller.name} / {self.name}"
+        return f"{self.controller.mqtt_user} / {self.name}"
 
 
 class Program(models.Model):
@@ -89,7 +89,7 @@ class Program(models.Model):
         return output
 
     def __str__(self):
-        return f"{self.channel.controller.name} / {self.channel.number} / ({self.days}|{self.hour}:{self.minute})"
+        return f"{self.channel.controller.mqtt_user} / {self.channel.number} / ({self.days}|{self.hour}:{self.minute})"
 
 
 class UserControllerPreferences(models.Model):

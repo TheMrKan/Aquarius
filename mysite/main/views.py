@@ -22,7 +22,7 @@ DAYS = {'monday': 'Понедельник',
 @login_required
 def index(request):
     available_controllers = utools.get_available_controllers(request.user)
-
+    print(available_controllers)
     if request.method == "POST":
         values = request.POST.dict()
         if all(k in values.keys() for k in ("server", "port", "user", "password", "prefix")):
@@ -33,7 +33,7 @@ def index(request):
                                            host=values["server"], port=int(values["port"]), prefix=values["prefix"],
                                            **{k: values[k] for k in ["email"] if k in values.keys()}):
                     utools.add_controller(request.user, values["user"], values["password"], values.get("cname", f"Контроллер {values['user']}"))
-    print(available_controllers)
+                    available_controllers[values["user"]] = values.get("cname", f"Контроллер {values['user']}")
     response = render(request, 'index.html',
                     {
                         'controllers': available_controllers
@@ -44,26 +44,7 @@ def index(request):
 
 @login_required
 def remove_controller(request, controller_username: str):
-    try:
-        saved_controllers = request.user.userextension.saved_controllers
-    except:
-        return
-
-    if saved_controllers is None:
-        saved_controllers = []
-    else:
-        saved_controllers = json.loads(saved_controllers)
-
-    to_remove = []
-    for n, i in enumerate(saved_controllers):
-        if controller_username.lower() == i[0].lower():
-            to_remove.append(n)
-
-    for i in to_remove:
-        del saved_controllers[i]
-
-    request.user.userextension.saved_controllers = json.dumps(saved_controllers)
-    request.user.userextension.save()
+    utools.remove_controller(request.user, controller_username)
 
     return redirect("/")
 

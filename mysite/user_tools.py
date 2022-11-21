@@ -1,5 +1,8 @@
 import json
+
+import django.core.exceptions
 from main.models import User, UserControllerPreferences, Controller, UserExtension
+
 from typing import Dict, List, Union
 from dataclasses import dataclass
 from django.core.exceptions import ObjectDoesNotExist
@@ -19,6 +22,7 @@ def get_available_controllers(user: User) -> Dict[str, str]:
         userextension.save()
         return {}
 
+    print("0:", saved_controllers)
     available_controllers = {}
 
     for cdata in saved_controllers:
@@ -55,6 +59,16 @@ def add_controller(user: User, mqtt_user: str, password: str, verbous_name: str)
                                            verbous_name=verbous_name)
     ucontprefs.save()
 
+
+def remove_controller(user: User, mqtt_user: str):
+    try:
+        ucontdata = user.userextension.usercontrollerpreferences_set.get(controller__mqtt_user=mqtt_user)
+    except ObjectDoesNotExist:
+        print("error")
+        return
+
+    ucontdata.delete()
+    print("1:", get_available_controllers(user))
 
 def is_authentificated(user: User, mqtt_user: str) -> bool:
     try:
