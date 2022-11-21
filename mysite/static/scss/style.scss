@@ -372,9 +372,9 @@ button{
 	font-size: 120%;
 	font-weight: 700;
 	line-height: 120%;
-	height: 92%;
+	height: 80%;
 	width: 92%;
-	padding: 10% 25%;
+	padding: 11% 2%;
 
 	&:hover{
 		background: #006400;
@@ -382,6 +382,11 @@ button{
 	&:active{
 		box-shadow: inset 3px 3px 10px 4px #7CFC00;
 	}
+}
+
+img{
+	//margin: 10% 0;
+	//border: 1px solid red;
 }
 
 table{

@@ -386,9 +386,9 @@ button {
   font-size: 120%;
   font-weight: 700;
   line-height: 120%;
-  height: 92%;
+  height: 80%;
   width: 92%;
-  padding: 10% 25%;
+  padding: 11% 2%;
 }
 button:hover {
   background: #006400;
