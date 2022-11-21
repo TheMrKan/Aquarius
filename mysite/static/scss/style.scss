@@ -352,7 +352,8 @@ button[name="all_days"]{
 	font-size: 120%;
 	font-weight: 700;
 	line-height: 120%;
-	width: 80%;
+	width: 70%;
+	border: 2px solid yellow;
 	&:hover{
 		background: #2F4F4F;
 	}
@@ -373,7 +374,7 @@ button{
 	line-height: 120%;
 	height: 92%;
 	width: 92%;
-	padding: 10px;
+	padding: 10% 25%;
 
 	&:hover{
 		background: #006400;
