@@ -4,7 +4,6 @@ import django.core.exceptions
 from channels.generic.websocket import WebsocketConsumer
 
 
-
 class ControllerConsumer(WebsocketConsumer):
 
     consumers = {}
