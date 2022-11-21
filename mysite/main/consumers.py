@@ -1,6 +1,8 @@
 import json
+
+import django.core.exceptions
 from channels.generic.websocket import WebsocketConsumer
-import user_tools
+
 
 
 class ControllerConsumer(WebsocketConsumer):
@@ -48,6 +50,7 @@ class ControllerConsumer(WebsocketConsumer):
 
     def receive(self, text_data=None, bytes_data=None):
         from ControllerManagers import ControllerV2Manager
+        import user_tools
 
         print()
 
