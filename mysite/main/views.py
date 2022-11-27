@@ -25,13 +25,11 @@ def index(request):
     print(available_controllers)
     if request.method == "POST":
         values = request.POST.dict()
-        if all(k in values.keys() for k in ("server", "port", "user", "password", "prefix")):
+        if all(k in values.keys() for k in ("user", "password")):
 
             if not values["user"] in available_controllers.keys():    # исключаем возможность повторного добавления одного и того-же контроллера
-                print({k: values[k] for k in ["cname", "email"] if k in values.keys()})
-                if ControllerV2Manager.add(values["user"], values["password"],
-                                           host=values["server"], port=int(values["port"]), prefix=values["prefix"],
-                                           **{k: values[k] for k in ["email"] if k in values.keys()}):
+                print({k: values[k] for k in ["cname"] if k in values.keys()})
+                if ControllerV2Manager.add(values["user"], values["password"]):
                     utools.add_controller(request.user, values["user"], values["password"], values.get("cname", f"Контроллер {values['user']}"))
                     available_controllers[values["user"]] = values.get("cname", f"Контроллер {values['user']}")
     response = render(request, 'index.html',
