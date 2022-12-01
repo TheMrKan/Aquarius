@@ -27,7 +27,7 @@ class LimitOfProgramsException(Exception):
 
 class ControllerV2Manager:
 
-    DEFAULT_HOST = "185.134.36.37"
+    DEFAULT_HOST = "hd.tlt.ru"
     DEFAULT_PORT = "18883"
     DEFAULT_PREFIX_PATTERN = "{user}/"
     DEFAULT_NAME_PATTERN = "Контроллер {user}"
@@ -127,7 +127,6 @@ class ControllerV2Manager:
                                          mqtt_host=host,
                                          mqtt_port=port,
                                          mqtt_prefix=prefix,
-                                         name=ControllerV2Manager.DEFAULT_NAME_PATTERN.format(user=controller_user)
                                          )
             self.data_model.save()
 
@@ -181,6 +180,7 @@ class ControllerV2Manager:
             self.command_turn_on_channel(i.number, 0)
 
     def send_status(self, status: bool):
+        print("Send status:", status)
         self.is_user_connected = status
         self.mqtt_manager.send(self.topic_send_status, str(int(status)), retain=True)
 
@@ -416,6 +416,130 @@ class ControllerV2Manager:
             return True
         return False
 
+    def command_get_30_channels_response(self, content: List[int]) -> bool:
+        bytes_in_packet = 35
+        total_packets = 75
+        print("30 chns content: ", content)
+
+        try:
+
+            parsed_message = content
+
+            packet_number = parsed_message[0]
+
+            del parsed_message[0]
+            print(packet_number, self.packet + 1, len(parsed_message))
+            if packet_number != self.packet + 1 or len(parsed_message) != bytes_in_packet:
+                if self.wrong_packets >= 5:
+                    self.packet = -1
+                    self.stashed_data = []
+                    self.blocked = False
+                    ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
+                    self.wrong_packets = 0
+                    return True
+                else:
+                    self.wrong_packets += 1
+                    return False
+
+            if packet_number == 40:
+                self.blocked = False
+                self.command_get_state()
+                self.blocked = True
+
+            missed_bytes = max((packet_number - self.packet - 1), 0) * bytes_in_packet
+            self.stashed_data += [0] * missed_bytes
+            self.stashed_data += parsed_message
+            self.packet = packet_number
+            print(f"Packet: {packet_number}")
+            self.wrong_packets = 0
+
+            if packet_number >= total_packets - 1:
+                [print(f"{n}: {i}") for n, i in enumerate(self.stashed_data)]
+                if len(self.stashed_data) != total_packets * bytes_in_packet:
+                    print("Invalid data")
+                    print("Error 2")
+                    ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
+                    self.packet = -1
+                    self.stashed_data = []
+                    self.blocked = False
+                    self.wrong_packets = 0
+                    return True
+
+                total_channels = 30
+                bytes_for_channel = 20
+                for i in range(total_channels):
+                    offset = bytes_for_channel * i + 20
+                    try:
+                        channel_model: Channel = Channel.objects.get(controller=self.data_model, number=i+1)
+                    except ObjectDoesNotExist:
+                        channel_model: Channel = Channel(controller=self.data_model, number=i+1, name=f"Канал {i+1}")
+
+                    Program.objects.filter(channel=channel_model).delete()
+
+                    c_properties = self.stashed_data[offset:offset+20]
+                    channel_model.temp_min = c_properties[0]
+                    channel_model.temp_max = c_properties[1]
+                    channel_model.meandr_on = c_properties[2]
+                    channel_model.meaoff_cmin = c_properties[3]
+                    channel_model.meaoff_cmax = c_properties[4]
+                    channel_model.press_on = c_properties[5]
+                    channel_model.press_off = c_properties[6]
+                    channel_model.season = c_properties[9]
+                    channel_model.rainsens = bool(c_properties[13])
+                    channel_model.tempsens = c_properties[14]
+                    channel_model.lowlevel = bool(c_properties[15])
+
+                    print(self.stashed_data[offset:offset+20])
+
+                    channel_model.save()
+
+                total_programs = 200
+                bytes_for_program = 8
+                for i in range(total_programs):
+                    offset = bytes_for_program * i + 640
+                    print(offset)
+                    print(f"Processing channel {self.stashed_data[offset]}; program {self.stashed_data[offset+1]}")
+                    try:
+                        if 255 in self.stashed_data[offset:offset+bytes_for_program] or self.stashed_data[offset] == 0:
+                            print("Skip empty program")
+                            continue
+                        channel_model: Channel = Channel.objects.get(controller=self.data_model, number=self.stashed_data[offset])
+                        print("Got channel model:", channel_model)
+                        try:
+                            program_model: Program = Program.objects.filter(channel=channel_model)[self.stashed_data[offset+1]]
+                            print("Program found in DB")
+                        except ObjectDoesNotExist:
+                            program_model: Program = Program(channel=channel_model)
+                            print(f"Program created because ObjectDoesNotExistsError with id {program_model.id}")
+                        except IndexError:
+                            program_model: Program = Program(channel=channel_model)
+                            print(f"Program created because IndexError with id {program_model.id}")
+
+                        program_model.days = ''.join([str(num+1) for num, j in enumerate(list("{0:b}".format(self.stashed_data[offset + 2]))) if bool(int(j))])
+                        program_model.weeks, program_model.hour, program_model.minute, program_model.t_min,\
+                        program_model.t_max = self.stashed_data[offset+3:offset+8]
+
+                        program_model.save()
+                        print(f"Program saved with properties: id = {program_model.id}; days = {program_model.days}; weeks = {program_model.weeks}")
+                    except Exception as ex1:
+                        traceback.print_exc()
+                        continue
+                ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user)
+                self.packet = -1
+                self.stashed_data = []
+                self.blocked = False
+                self.wrong_packets = 0
+                self.command_get_state()
+                return True
+        except Exception as ex:
+            traceback.print_exc()
+            self.packet = -1
+            self.stashed_data = []
+            self.blocked = False
+            ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
+            return True
+        return False
+
     def get_controller_properties(self) -> dict:
         channels = Channel.objects.filter(controller__mqtt_user=self.data_model.mqtt_user)
         channels_state = [i.state for i in channels]
@@ -565,8 +689,13 @@ class ControllerV2Manager:
         return check_sum_bytes[0], check_sum_bytes[1]
 
     def handle_message(self, mqtt: MQTTManager, controller_prefix: str, data: str) -> None:
+        print(f"{self.is_user_connected=}")
         if self.is_user_connected:
-            response_handler.handle_data(self, data)
+
+            response_handler.handle_data(self, data, None if self.data_model.version < 200 else
+                                         {
+                                             response_handler.DownloadingDataPattern: type(self).command_get_30_channels_response
+                                         })
 
     def handle_status_message(self, mqtt: MQTTManager, controller_prefix: str, data: str) -> None:
         print("Handle status data:", data)
@@ -575,7 +704,7 @@ class ControllerV2Manager:
         self.data_model.save()
 
 
-
 # регистрируем обработчики для паттернов данных
 response_handler.DownloadingDataPattern.handle = ControllerV2Manager.command_get_channels_response
 response_handler.PropertiesDataPattern.handle = ControllerV2Manager.command_get_state_response
+

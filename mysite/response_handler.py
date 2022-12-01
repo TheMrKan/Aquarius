@@ -1,6 +1,6 @@
 import abc
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Dict, Callable
 import traceback
 
 
@@ -42,7 +42,6 @@ class DownloadingDataPattern(DataPattern):
         data = data.split(".10.11.12.13.12.11.10")[0]
         return list(map(int, data.split(".")))
 
-
 class PropertiesDataPattern(DataPattern):
 
     @classmethod
@@ -55,20 +54,27 @@ class PropertiesDataPattern(DataPattern):
             return False
 
 
-patterns = [DownloadingDataPattern, PropertiesDataPattern]
+patterns = [PropertiesDataPattern, DownloadingDataPattern]
 
 
-def get_matching_pattern(response: str) -> type:
+def get_matching_pattern(response: str, overwritings: Dict[type, Callable]) -> type:
     for p in patterns:
         if issubclass(p, DataPattern):
-            if p.match(response):
+            if p in overwritings.keys():
+                default = p.handle
+                p.handle = overwritings[p]
+                if p.match(response):
+                    return p
+                p.handle = default
+            elif p.match(response):
                 return p
+
     raise PatternNotFoundError(f"Failed to found matching pattern for '{response}'")
 
 
-def handle_data(obj, data: str) -> bool:
+def handle_data(obj, data: str, overwritings: Dict[type, Callable] = None) -> bool:
     try:
-        pattern: DataPattern = get_matching_pattern(data)
+        pattern: DataPattern = get_matching_pattern(data, overwritings if overwritings is not None else {})
     except PatternNotFoundError:
         return False
 

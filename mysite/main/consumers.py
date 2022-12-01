@@ -29,7 +29,9 @@ class ControllerConsumer(WebsocketConsumer):
 
     @staticmethod
     def send_data_downloaded(prefix: str, error: str = ""):
+        print("send data downloaded")
         if prefix in ControllerConsumer.consumers.keys():
+            print("in consumers")
             ControllerConsumer.consumers[prefix].send(text_data=json.dumps({"type": "data_downloaded", "error": error}))
 
     @staticmethod

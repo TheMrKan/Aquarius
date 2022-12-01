@@ -51,6 +51,7 @@ def add_controller(user: User, mqtt_user: str, password: str, verbous_name: str)
             cdata.save()
             return
 
+    print(Controller.objects.all())
     controller = Controller.objects.get(mqtt_user=mqtt_user)
 
     ucontprefs = UserControllerPreferences(user_extension=user.userextension,

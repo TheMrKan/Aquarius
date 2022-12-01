@@ -30,6 +30,7 @@ def index(request):
             if not values["user"] in available_controllers.keys():    # исключаем возможность повторного добавления одного и того-же контроллера
                 print({k: values[k] for k in ["cname"] if k in values.keys()})
                 if ControllerV2Manager.add(values["user"], values["password"]):
+                    print(Controller.objects.all())
                     utools.add_controller(request.user, values["user"], values["password"], values.get("cname", f"Контроллер {values['user']}"))
                     available_controllers[values["user"]] = values.get("cname", f"Контроллер {values['user']}")
     response = render(request, 'index.html',
