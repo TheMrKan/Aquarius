@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1.0, user-scalable=0">
+	<meta name="format-detection" content="telephone=no">
+	<title>Удаленные блоки</title>
+	<!--<link rel="stylesheet" href="css/style.css">-->
+	{% load static %}
+	<link rel="stylesheet" href="{% static 'css/style.css' %}">
+	<link rel="icon" href="{% static 'img/favicon.ico' %}" type="image/x-icon">
+</head>
+
+<body>
+
+	<div class="wrapper">
+
+		<div class="page">
+
+			<div class="page__row">
+
+				<div class="page__head">
+					<div class="mhead">
+						<div class="mhead__title">Удаленные блоки</div>
+						<a target="_blank" href="https://hi-garden.ru/aqua2-manual" class="mhead__manual xhref">&#8942;</a>		 
+				 	</div>
+				</div>
+
+			  	<div class="page__body">
+
+					<div class="mbody" style="border: 1px solid green;">
+
+						<form id="pump" method="post" action="{% url 'pump' mqtt_user %}" style="height: 95%;">
+							{% csrf_token %}
+
+							<div class="status">
+
+								<div class="status__row">
+									<table>
+										<tr>
+											  <td>Удаленный блок 1:</td>
+											  <td style="border: 1px solid gray;"><input name="pmin" value="{{ pmin }}"/></td>
+										</tr>
+										<tr></tr>
+										<tr>
+											  <td>Удаленный блок 2:</td>
+											  <td style="border: 1px solid gray;"><input name="pmax" value="{{ pmax }}"/></td>
+										</tr>
+										<tr></tr>
+										<tr>
+											<td>Удаленный блок 3:</td>
+											<td style="border: 1px solid gray;"><input name="pmax" value="{{ pmax }}"/></td>
+									 </tr>
+									</table>
+
+								</div>
+
+								<div class="status__row">
+									<div class="titlew">
+										<p style="text-align: left; white-space: pre-line;">
+											Удаленный блок можно установить на расстоянии до 200 м от контроллера полива.<br>
+											На удаленном блоке будут дублироваться включения каналов контроллера.
+											<br>
+											Номер удаленного блока написан в левом верхнем углу его платы.
+										</p>
+									</div>
+								</div>
+
+
+								<div class="status__row">
+
+									<div class="status__column" style="width: 30%;">
+										<button type="submit" name="save"><img src="{% static 'img/save.png' %}" alt="Сохранить" title="Сохранить" height=50px></button>
+									</div>
+
+								</div>
+							
+							</div>
+
+						</form>
+
+					</div>
+
+				</div>
+
+			  	<div class="page__footer"></div>
+			</div>
+	</div>
+</body>
+</html>
