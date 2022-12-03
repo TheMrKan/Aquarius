@@ -31,7 +31,7 @@
 
 					<div class="mbody" style="border: 1px solid green;">
 
-						<form id="pump" method="post" action="{% url 'pump' mqtt_user %}" style="height: 95%;">
+						<form id="pump" method="post" action="{% url 'remote_blocks' mqtt_user %}" style="height: 95%;">
 							{% csrf_token %}
 
 							<div class="status">
@@ -40,17 +40,17 @@
 									<table>
 										<tr>
 											  <td>Удаленный блок 1:</td>
-											  <td style="border: 1px solid gray;"><input name="pmin" value="{{ pmin }}"/></td>
+											  <td style="border: 1px solid gray;"><input name="block0" value="{{ block0 }}"/></td>
 										</tr>
 										<tr></tr>
 										<tr>
 											  <td>Удаленный блок 2:</td>
-											  <td style="border: 1px solid gray;"><input name="pmax" value="{{ pmax }}"/></td>
+											  <td style="border: 1px solid gray;"><input name="block1" value="{{ block1 }}"/></td>
 										</tr>
 										<tr></tr>
 										<tr>
 											<td>Удаленный блок 3:</td>
-											<td style="border: 1px solid gray;"><input name="pmax" value="{{ pmax }}"/></td>
+											<td style="border: 1px solid gray;"><input name="block2" value="{{ block2 }}"/></td>
 									 </tr>
 									</table>
 

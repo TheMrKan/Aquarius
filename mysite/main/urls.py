@@ -11,6 +11,7 @@ urlpatterns = [
     path('controllers/<str:mqtt_user>/channel_naming', views.channel_naming, name='channel_naming'),
     path('controllers/<str:mqtt_user>/pause/<int:minutes>', views.pause, name='pause'),
     path('controllers/<str:mqtt_user>/pump', views.pump, name='pump'),
+    path('controllers/<str:mqtt_user>/remote_blocks', views.remote_blocks, name='remote_blocks'),
     path('controllers/<str:mqtt_user>/channels/<str:chn>', views.channel, name='channel'),
     path('controllers/<str:mqtt_user>/channels/<str:chn>/create_program', lambda r, mqtt_user, chn: views.channel(r, mqtt_user, chn, True), name='create_program'),
     path('controllers/<str:mqtt_user>/channels/<str:chn>/programs/<str:prg_id>', views.program, name='program'),

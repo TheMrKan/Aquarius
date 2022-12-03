@@ -66,9 +66,9 @@ class MQTTManager:
 
 
     def on_message(self, userdata, message):
-        print(f'MQTT ({self.user}) - [{message.topic.replace(self.prefix, "")}] - {str(message.payload.decode("utf-8")).strip()}')
+        #print(f'MQTT ({self.user}) - [{message.topic.replace(self.prefix, "")}] - {str(message.payload.decode("utf-8")).strip()}')
         if message.topic.replace(self.prefix, '') in self.topicHandlers.keys():
-            print("Handle:", str(message.payload.decode("utf-8")).strip())
+            #print("Handle:", str(message.payload.decode("utf-8")).strip())
             self.topicHandlers[message.topic.replace(self.prefix, "")](self, self.user, str(message.payload.decode("utf-8")).strip())
 
     def __init__(self, host, port, user, password, prefix):

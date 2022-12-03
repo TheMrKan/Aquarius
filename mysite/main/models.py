@@ -38,6 +38,9 @@ class Controller(models.Model):
     esp_errors = models.BooleanField(default=False)
     pressure = models.FloatField(default=0)
     stream = models.FloatField(default=0)
+    remote_block0 = models.IntegerField(default=0)
+    remote_block1 = models.IntegerField(default=0)
+    remote_block2 = models.IntegerField(default=0)
 
     def __str__(self):
         return self.mqtt_user

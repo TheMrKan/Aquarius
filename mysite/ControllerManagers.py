@@ -676,6 +676,21 @@ class ControllerV2Manager:
             traceback.print_exc()
             return False
 
+    def get_remote_blocks(self) -> Tuple:
+        return self.data_model.remote_block0, self.data_model.remote_block1, self.data_model.remote_block2
+
+    def set_remote_blocks(self, rblock0: int, rblock1: int, rblock2: int):
+        rblock0 = rblock0 % 10000
+        rblock1 = rblock1 % 10000
+        rblock2 = rblock2 % 10000
+
+        self.data_model.remote_block0 = rblock0
+        self.data_model.remote_block1 = rblock1
+        self.data_model.remote_block2 = rblock2
+        self.data_model.save()
+
+        self.send_command("0.1.1", ".".join([".".join([str(i) for i in f"{rb:0>4}"]) for rb in (rblock0, rblock1, rblock2)]))
+
     def on_connected(self, mqtt: MQTTManager):
         self.command_get_state()
 
@@ -689,7 +704,7 @@ class ControllerV2Manager:
         return check_sum_bytes[0], check_sum_bytes[1]
 
     def handle_message(self, mqtt: MQTTManager, controller_prefix: str, data: str) -> None:
-        print(f"{self.is_user_connected=}")
+        #print(f"{self.is_user_connected=}")
         if self.is_user_connected:
 
             response_handler.handle_data(self, data, None if self.data_model.version < 200 else

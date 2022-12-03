@@ -337,6 +337,37 @@ def pump(request, mqtt_user):
 
 
 @login_required
+def remote_blocks(request, mqtt_user):
+    if not utools.is_authentificated(request.user, mqtt_user):
+        return redirect("/")
+    if ControllerV2Manager.check_block(mqtt_user):
+        return redirect("controller", mqtt_user)
+
+    instance: ControllerV2Manager = ControllerV2Manager.get_instance(mqtt_user)
+    if instance is None:
+        raise ValueError(f"Сущность менеджера контроллера '{mqtt_user}' не найдена.")
+
+    if request.method == "POST":
+        data = request.POST.dict()
+        if all([k in data.keys() for k in ("block0", "block1", "block2")]):
+            try:
+                instance.set_remote_blocks(int(data["block0"]), int(data["block1"]), int(data["block2"]))
+            except ValueError:
+                pass
+        return redirect("controller", mqtt_user)
+
+    rblocks = instance.get_remote_blocks()
+
+    return render(request, "remote_blocks.html",
+                  {
+                      "mqtt_user": mqtt_user,
+                      "block0": rblocks[0],
+                      "block1": rblocks[1],
+                      "block2": rblocks[2]
+                  })
+
+
+@login_required
 def channel(request, mqtt_user, chn, create_prg=False):
     if not utools.is_authentificated(request.user, mqtt_user):
         return redirect("/")
