@@ -1,3 +1,54 @@
-{% block content %}
-<p>You are now registered. Activation email sent.</p>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1.0, user-scalable=0">
+	<meta name="format-detection" content="telephone=no">
+	<title>Registration</title>
+	<!--<link rel="stylesheet" href="css/style.css">-->
+	{% load static %}
+	<link rel="stylesheet" href="{% static 'css/style.css' %}">
+	<link rel="icon" href="{% static 'img/favicon.ico' %}" type="image/x-icon">
+</head>
+
+<body>
+	<div class="wrapper">
+		<div class="page">
+			<div class="page__row">
+				<div class="page__head">
+					<div class="mhead">
+						
+						<div class="mhead__title">
+							<b>Регистрация пользователя</b>
+						</div>
+						
+						<div class="mhead__manual">
+							<a href="javascript:history.back()" class="mhead__manual xhref">&#10006;</a>
+						</div>								 
+						
+					</div>
+				</div>
+
+				<div class="page__body">
+					<div class="mbody">
+						<div class="status">
+							<div class="status__row">
+								<div class="titlew">
+									{% block content %}
+									<p>Вы прошли регистрацию.   Условия активации высланы на указанный e-mail.</p>
+									{% endblock %}
+								</div>
+							</div>
+						</div>
+					</div>
+
+				</div>
+
+				<div class="page__footer"></div>
+
+			</div>
+		</div>	
+	</div>
+</body>
+</html>

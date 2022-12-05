@@ -1,5 +1,5 @@
-Activate account at {{ site.name }}:
+Активация аккаунта на сайте {{ site.name }}:
 
 http://{{ site.domain }}{% url 'django_registration_activate' activation_key %}
 
-Link is valid for {{ expiration_days }} days.
+Ссылка действительна в течение {{ expiration_days }} дней.
