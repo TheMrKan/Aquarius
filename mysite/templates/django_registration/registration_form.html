@@ -19,7 +19,7 @@
       <div class="page__head">
         <div class="mhead">
           <div class="mhead__title">Регистрация пользователя</Main></div>
-          <a target="_blank" href="https://hi-garden.ru/aqua2-manual" class="mhead__manual xhref">&#8942;</a>		 
+          <a target="_blank" href="https://hi-garden.ru/aqua2-manual" class="mhead__manual xhref">&#10006;</a>		 
          </div>
       </div>
 
@@ -44,24 +44,28 @@
                 {% endfor %}
               <tr>
                 <td>{{ form.username.label_tag }}</td>
+              </tr>
+              <tr>
                 <td style="border: 1px solid gray;">{{ form.username }}</td>
               </tr>
-          
               <tr>
                 <td>{{ form.email.label_tag }}</td>
+               </tr>
+              <tr>
                 <td style="border: 1px solid gray;">{{ form.email }}</td>
               </tr>
-          
               <tr>
                 <td>{{ form.password1.label_tag }}</td>
+              </tr>
+              <tr>
                 <td style="border: 1px solid gray;">{{ form.password1 }}</td>
               </tr>
-          
               <tr>
                 <td>{{ form.password2.label_tag }}</td>
+              </tr>
+              <tr>
                 <td style="border: 1px solid gray;">{{ form.password2 }}</td>
               </tr>
-          
               </table>
               <input type="submit" id="subbtn" value="Регистрация" />
             </div>
