@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('gantt', views.gantt, name='gantt'),
     path('remove_controller/<str:controller_username>', views.remove_controller, name='remove_controller'),
     path('reports/', views.reports, name='reports'),
     path('controllers/<str:mqtt_user>', views.controller, name='controller'),
