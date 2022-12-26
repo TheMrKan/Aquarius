@@ -5,7 +5,7 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1.0, user-scalable=0">
 	<meta name="format-detection" content="telephone=no">
-	<title>Pump</title>
+	<title>График включений</title>
 	<!--<link rel="stylesheet" href="css/style.css">-->
 	{% load static %}
 	<link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -30,6 +30,14 @@ tr {
   height: 10px;
 }
 </style>
+
+<script>
+    const CHANNEL_TEMPLATE = "{% url 'program' mqtt_user 55555 66666 %}"
+    function move_to_prg(channel_num, prg_num)
+    {
+        window.location.replace(CHANNEL_TEMPLATE.replace("55555", channel_num).replace("66666", prg_num))
+    };
+</script>
 
 <body>
 
@@ -65,13 +73,13 @@ tr {
     <thead class="graph-header">
         <tr class="graph">
             <th>Номер канала</th>
-            <th colspan="24" style="width: 13%"><a href="{{prefix}}/monday">Понедельник</a></th>
-            <th colspan="24" style="width: 13%"><a href="{{prefix}}/tuesday">Вторник</a></th>
-            <th colspan="24" style="width: 13%"><a href="{{prefix}}/wednesday">Среда</a></th>
-            <th colspan="24" style="width: 13%"><a href="{{prefix}}/thursday">Четверг</a></th>
-            <th colspan="24" style="width: 13%"><a href="{{prefix}}/friday">Пятница</a></th>
-            <th colspan="24" style="width: 13%"><a href="{{prefix}}/saturday">Суббота</a></th>
-            <th colspan="24" style="width: 13%"><a href="{{prefix}}/sunday">Воскресенье</a></th>
+            <th colspan="24" style="width: 13%">Понедельник</th>
+            <th colspan="24" style="width: 13%">Вторник</th>
+            <th colspan="24" style="width: 13%">Среда</th>
+            <th colspan="24" style="width: 13%">Четверг</th>
+            <th colspan="24" style="width: 13%">Пятница</th>
+            <th colspan="24" style="width: 13%">Суббота</th>
+            <th colspan="24" style="width: 13%">Воскресенье</th>
         </tr>
     </thead>
     <tbody>
@@ -81,11 +89,11 @@ tr {
                 {% for week in line %}
                     {% for h in week %}
                         {% if forloop.first %}
-                            <th class="graph-left" {% if h == 1 %} style="background: green;" {% endif %}></th>
+                            <th class="graph-left" {% if h.active == 1 %} style="background: green;" onclick="move_to_prg({{h.chn}}, {{h.prg}});" {% endif %}></th>
                         {% elif forloop.last %}
-                            <th class="graph-right" {% if h == 1 %} style="background: green;" {% endif %}></th>
+                            <th class="graph-right" {% if h.active == 1 %} style="background: green;" onclick="move_to_prg({{h.chn}}, {{h.prg}});"{% endif %}></th>
                         {% else %}
-                            <th {% if h == 1 %} style="background: green;"{% endif %}></th>
+                            <th {% if h.active == 1 %} style="background: green;" onclick="move_to_prg({{h.chn}}, {{h.prg}});"{% endif %}></th>
                         {% endif %}
                     {% endfor %}
                 {% endfor %}
