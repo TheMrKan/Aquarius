@@ -530,6 +530,11 @@ def gantt(request, mqtt_user: str):
 
     programs = Program.objects.filter(channel__controller__mqtt_user=mqtt_user)
     channels = Channel.objects.filter(controller__mqtt_user=mqtt_user)
+    controller = Controller.objects.get(mqtt_user=mqtt_user)
+
+    if controller.version < 200:
+        channels = channels[:10]
+
     lines = []
     for chn in channels:
         lines.append(get_week(chn))
