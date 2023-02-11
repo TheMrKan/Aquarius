@@ -13,7 +13,6 @@ import threading
 import response_handler
 import traceback
 
-
 def try_int(i):
     try:
         return int(i)
@@ -39,6 +38,7 @@ class ControllerV2Manager:
     topic_receive = "aqua_kontr"
     topic_status = "tele/Aquarius/LWT"
     topic_send_status = "smart_LWT"
+    topic_log = "tele/Aquarius/SENSOR"
 
     pump_channel_number = 10
     max_programs_for_channel = 14
@@ -160,11 +160,14 @@ class ControllerV2Manager:
         self.send_status(False)
         self.mqtt_manager.unsubscribe(self.topic_receive)
         self.mqtt_manager.unsubscribe(self.topic_status)
+        self.mqtt_manager.unsubscribe(self.topic_log)
         del self
 
     def subscribe(self, mqtt: MQTTManager) -> None:
+        import history.logger as history_logger
         mqtt.subscribe(self.topic_receive, self.handle_message)
         mqtt.subscribe(self.topic_status, self.handle_status_message)
+        mqtt.subscribe(self.topic_log, lambda m, login, data: history_logger.log(login, data))
         mqtt.onConnected = self.on_connected
 
     def send_command(self, request_code: str, payload: str = ""):

@@ -13,11 +13,10 @@ class MainConfig(AppConfig):
     process = None
 
     def ready(self):
-        '''try:
-            from main.models import Controller
-            from ControllerManagers import ControllerV2Manager
-            for c in Controller.objects.all():
-                ControllerV2Manager.add(c.prefix, c.password)
-        except:
-            pass'''
+
+        from main.models import Controller
+        from ControllerManagers import ControllerV2Manager
+        for c in Controller.objects.all():
+            ControllerV2Manager.add(c.mqtt_user, c.mqtt_password)
+
 

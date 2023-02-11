@@ -109,3 +109,20 @@ class UserControllerPreferences(models.Model):
                 fields=['user_extension', 'controller'], name='unique_user_controller_combination'
             )
         ]
+
+
+class HistoryEntry(models.Model):
+    controller: Controller = models.ForeignKey('Controller', on_delete=models.CASCADE)
+    log_time = models.DateTimeField(auto_now=True)
+    avr_time = models.TimeField(default=None, blank=True, null=True)
+    temp0 = models.IntegerField(default=None, blank=True, null=True)
+    temp1 = models.IntegerField(default=None, blank=True, null=True)
+    pressure = models.IntegerField(default=None, blank=True, null=True)
+    wspd = models.IntegerField(default=None, blank=True, null=True)
+    rain = models.BooleanField(default=None, blank=True, null=True)
+    pause = models.BooleanField(default=None, blank=True, null=True)
+    alarm = models.BooleanField(default=None, blank=True, null=True)
+    rssi = models.IntegerField(default=None, blank=True, null=True)
+    channels_state = models.IntegerField(default=None, blank=True, null=True)
+    cykl = models.CharField(default=None, blank=True, null=True, max_length=10)
+

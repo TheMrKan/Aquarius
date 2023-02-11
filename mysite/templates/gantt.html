@@ -17,17 +17,30 @@
   border-collapse: collapse;
   border-spacing: 0;
   width: 100%;
-  border: 1px solid #ddd;
+  border: 1px solid gray;
+
 }
 
 th, td {
-  text-align: left;
+  text-align: center;
   padding: 4px;
   font-size: 20px;
 }
 
 tr {
   height: 10px;
+}
+
+.graph-right {
+    border-right: 2px solid gray
+}
+
+.graph-left {
+    border-left: 2px solid gray
+}
+
+.graph-header {
+    border-bottom: 2px solid gray;
 }
 </style>
 
@@ -65,7 +78,7 @@ tr {
 
 					<div class="mbody" style="border: 1px solid green; overflow-x:auto;">
 
-	<table style="border-collapse:collapse;">
+	<table style="border-collapse:collapse; ">
     <colgroup>
         <col>
         <col span="7">

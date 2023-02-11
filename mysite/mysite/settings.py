@@ -33,14 +33,14 @@ ALLOWED_HOSTS = ["192.168.137.1", "hd.tlt.ru", "127.0.0.1", "192.168.31.191"]
 
 INSTALLED_APPS = [
     'channels',
-    'main.apps.MainConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_registration'
+    'django_registration',
+    'main.apps.MainConfig',
 ]
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
