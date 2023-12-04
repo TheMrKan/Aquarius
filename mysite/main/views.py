@@ -544,3 +544,7 @@ def gantt(request, mqtt_user: str):
                       'mqtt_user': mqtt_user,
                       'lines_week': lines
                    })
+
+
+def history(request):
+    return render(request, "history.html", {})

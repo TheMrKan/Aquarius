@@ -22,7 +22,7 @@ class MQTTManager:
     def send(self, topic, data, retain=False):
         if self.client is None:
             return
-        #print(f"MQTT: Send to [{topic}]: {data}")
+        print(f"MQTT ({self.host}:{self.port}@{self.user}): Send to [{topic}]: {data}")
         self.client.publish(self.prefix + topic, data, retain=retain)
 
     def on_disconnect(self, *args):

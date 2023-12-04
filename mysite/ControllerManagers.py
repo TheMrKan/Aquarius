@@ -175,6 +175,8 @@ class ControllerV2Manager:
             msg = self.wrap_command(request_code, payload)
             self.last_command = request_code
             self.mqtt_manager.send(self.topic_send, msg)
+        else:
+            print(f"Unable to send a message with request code {request_code} because controller instance is blocked")
 
     def turn_off_all_channels(self):
         active_channels = Channel.objects.filter(controller__mqtt_user=self.user, state=True)
@@ -583,6 +585,7 @@ class ControllerV2Manager:
 
 
     def command_get_state(self) -> None:
+        print("Sending get_state command to MQTT...")
         self.send_command("8.8.8.8.8.8.8.8")
 
     def command_set_time(self, year, month, day, hour, minute, second):
