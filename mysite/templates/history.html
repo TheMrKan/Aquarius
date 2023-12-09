@@ -1,0 +1,127 @@
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1.0, user-scalable=0">
+	<meta name="format-detection" content="telephone=no">
+	<title>Enable</title>
+	<!--<link rel="stylesheet" href="css/style.css">-->
+	{% load static %}
+	<link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="icon" href="{% static 'img/favicon.ico' %}" type="image/x-icon">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!--Line below added, added date adapter for time scale -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+
+<body>
+  <div class="wrapper">
+        <div class="page">
+            <div class="page">
+                <div class="page__row">
+
+                    <div class="page__head">
+                        <div class="mhead">
+                            <a target="_blank" href="https://hi-garden.ru/" class="mhead__logo xhref">Hi-Garden</a>
+                            <div class="mhead__title">История</div>
+                            <a href="{% url 'index' %}" class="mhead__manual xhref">&#10006;</a>
+                         </div>
+                    </div>
+
+                    <div class="page__body">
+
+                        <div class="mbody">
+
+                            <canvas id="line-chart" width="800" height="450"></canvas>
+
+                        </div>
+
+                    </div>
+
+                    <div class="page__footer"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+<script>
+
+  Chart.defaults.borderColor = '#949494';
+  Chart.defaults.color = '#cacbcc';
+
+  points0 = []
+  points1 = []
+  points2 = []
+  date = Date(2016, 11, 27, 0, 0, 0)
+  for (d = 27; d < 29; d++) {
+      for (h = 1; h < 24; h += 6) {
+          let x = '2023-02-' + d.toString() + ' ' + ("0" + h).slice(-2).toString() + ':00';
+          points0.push({
+              x: x,
+              y: Math.floor(40 + Math.random() * 40),
+          })
+          points1.push({
+              x: x,
+              y: Math.floor(40 + Math.random() * 40),
+          })
+          points2.push({
+              x: x,
+              y: Math.floor(30 + Math.random() * 10),
+          })
+      }
+  }
+
+    console.log(points0)
+
+	const data = {
+  datasets: [{
+      label: 'Температура 1',
+      borderColor: 'rgb(255, 99, 132)',
+
+      data: points0
+    },
+    {
+      label: 'Температура 2',
+      borderColor: 'rgb(66, 135, 245)',
+
+      data: points1
+    },
+    {
+      label: 'Давление',
+      borderColor: 'rgb(178, 184, 24)',
+
+      data: points2
+    }
+  ],
+};
+
+const config = {
+  type: 'line',
+  data: data,
+  options: {
+    responsive: true,
+    scales: {
+      x: {
+        type: 'time',
+        time: {unit: 'hour', displayFormats: {'hour': 'dd MMM'}, unitStepSize: 6}
+      },
+      y: {
+        min: 0,
+        max: 100,
+      }
+    }
+  },
+};
+
+const myChart = new Chart(
+  document.getElementById('line-chart'),
+  config
+);
+</script>
+
+</html>
