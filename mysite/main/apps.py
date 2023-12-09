@@ -1,6 +1,7 @@
 from django.apps import AppConfig
 from django.conf import settings
 from multiprocessing import Process
+import traceback
 
 
 class MainConfig(AppConfig):
@@ -13,10 +14,12 @@ class MainConfig(AppConfig):
     process = None
 
     def ready(self):
-
-        from main.models import Controller
-        from ControllerManagers import ControllerV2Manager
-        for c in Controller.objects.all():
-            ControllerV2Manager.add(c.mqtt_user, c.mqtt_password)
+        try:
+            from main.models import Controller
+            from ControllerManagers import ControllerV2Manager
+            for c in Controller.objects.all():
+                ControllerV2Manager.add(c.mqtt_user, c.mqtt_password)
+        except:
+            traceback.print_exc()
 
 
