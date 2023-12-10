@@ -156,33 +156,4 @@ EMAIL_FROM = 'no-reply@hd.tlt.ru'
 
 CSRF_TRUSTED_ORIGINS = ["http://hd.tlt.ru"]
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'console': {
-            'format': '%(name)-15s %(levelname)-5s %(message)s'
-        },
-        'file': {
-            'format': '%(asctime)s %(name)-15s %(levelname)-5s %(message)s'
-        }
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'console'
-        },
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'formatter': 'file',
-            'filename': 'debug.log'
-        }
-    },
-    'loggers': {
-        '': {
-            'level': 'DEBUG',
-            'handlers': ['console', 'file']
-        }
-    }
-}
+
