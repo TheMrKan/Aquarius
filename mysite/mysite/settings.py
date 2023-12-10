@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-wk*0f1sf(+!)dsh9()8ao+fon#mx=t$k6bty-rq!#txyuna-_(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG")
 
-ALLOWED_HOSTS = ["192.168.137.1", "hd.tlt.ru", "127.0.0.1", "192.168.31.191"]
+ALLOWED_HOSTS = ["192.168.137.1", "hd.tlt.ru", "127.0.0.1", "192.168.31.191", "*"]
 
 
 # Application definition
@@ -134,9 +134,8 @@ LOGIN_REDIRECT_URL = '/'
 
 STATIC_URL = 'static/'
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
@@ -154,3 +153,5 @@ EMAIL_HOST_USER = "hidevice63@gmail.com"
 EMAIL_HOST_PASSWORD = "qlipnqxstjwcpfzk"
 EMAIL_USE_TLS = True
 EMAIL_FROM = 'no-reply@hd.tlt.ru'
+
+CSRF_TRUSTED_ORIGINS = ["http://hd.tlt.ru"]
