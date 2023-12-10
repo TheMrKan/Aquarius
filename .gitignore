@@ -5,3 +5,4 @@ mysite/mysite/__pycache__/urls.cpython-38.pyc
 mysite/db.sqlite3
 mysite/main/migrations/__pycache__/0016_rename_host_controller_mqtt_host_and_more.cpython-38.pyc
 /mysite/BACKUP/
+/mysite/debug.log
