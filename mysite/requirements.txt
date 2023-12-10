@@ -6,4 +6,4 @@ django-registration
 django-environ
 psycopg2-binary
 uvicorn
-
+websockets
