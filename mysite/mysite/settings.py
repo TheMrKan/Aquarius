@@ -154,6 +154,6 @@ EMAIL_HOST_PASSWORD = "qlipnqxstjwcpfzk"
 EMAIL_USE_TLS = True
 EMAIL_FROM = 'no-reply@hd.tlt.ru'
 
-CSRF_TRUSTED_ORIGINS = ["http://hd.tlt.ru"]
+CSRF_TRUSTED_ORIGINS = ["https://hd.tlt.ru"]
 
 
