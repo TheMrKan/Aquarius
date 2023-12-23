@@ -10,6 +10,7 @@ from main.consumers import ControllerConsumer
 import json
 import user_tools as utools
 import dataclasses
+import mysite.main.conf as conf
 
 DAYS = {'monday': 'Понедельник',
         'tuesday': 'Вторник',
@@ -23,7 +24,7 @@ DAYS = {'monday': 'Понедельник',
 @login_required
 def index(request):
     available_controllers = utools.get_available_controllers(request.user)
-    print(available_controllers)
+
     if request.method == "POST":
         values = request.POST.dict()
         if all(k in values.keys() for k in ("user", "password")):
@@ -36,7 +37,10 @@ def index(request):
                     available_controllers[values["user"]] = values.get("cname", f"Контроллер {values['user']}")
     response = render(request, 'index.html',
                     {
-                        'controllers': available_controllers
+                        'controllers': available_controllers,
+                        'test_controller_name': conf.TEST_CONTROLLER_NAME,
+                        'test_controller_mqtt_user': conf.TEST_CONTROLLER_USER,
+                        'test_controller_mqtt_password': conf.TEST_CONTROLLER_PASSWORD
                     })
 
     return response
