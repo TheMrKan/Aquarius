@@ -1,3 +1,9 @@
+import os
+
 TEST_CONTROLLER_NAME = "Тестовый контроллер"
 TEST_CONTROLLER_USER = "21E"
 TEST_CONTROLLER_PASSWORD = "180690033"
+
+
+USE_SSL = IS_PRODUCTION = bool(int(os.getenv("IS_PRODUCTION", "0")))
+SITE_NAME = os.getenv("HOST_NAME") if IS_PRODUCTION else "192.168.137.1"

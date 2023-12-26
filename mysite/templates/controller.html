@@ -137,24 +137,18 @@
 	}
 
 	var intervalId = window.setInterval(function(){
-	    console.log("debug 0");
   		socket.send(JSON.stringify({"mqtt_user": MQTT_USER, "command": "get_properties"}));
-  		console.log("debug 1");
 	}, 60000);
 
-    console.log("debug 2");
 	const socket = new WebSocket(
-            'wss://'
+            '{{ ws }}://'
             + window.location.host
             + '/ws/controller'
         );
-    console.log("debug 3");
 
 	socket.onopen = function(e)
 	{
-	    console.log("debug 4");
 	  	socket.send(JSON.stringify({"mqtt_user": MQTT_USER, "command": "get_properties"}));
-	  	console.log("debug 5");
 	};
 
 

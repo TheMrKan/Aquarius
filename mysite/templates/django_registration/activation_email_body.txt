@@ -1,5 +1,5 @@
-Активация аккаунта на сайте {{ site.name }}:
+Активация аккаунта на сайте {{ http }}://{{ site_name }}/ :
 
-https://{{ site.domain }}{% url 'django_registration_activate' activation_key %}
+{{ http }}://{{ site_name }}{% url 'django_registration_activate' activation_key %}
 
 Ссылка действительна в течение {{ expiration_days }} дней.

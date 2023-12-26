@@ -42,6 +42,10 @@ class Controller(models.Model):
     remote_block1 = models.IntegerField(default=0)
     remote_block2 = models.IntegerField(default=0)
 
+    @property
+    def channels(self):
+        return Channel.objects.filter(controller=self).order_by("number")
+
     def __str__(self):
         return self.mqtt_user
 

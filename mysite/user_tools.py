@@ -22,7 +22,6 @@ def get_available_controllers(user: User) -> Dict[str, str]:
         userextension.save()
         return {}
 
-    print("0:", saved_controllers)
     available_controllers = {}
 
     for cdata in saved_controllers:

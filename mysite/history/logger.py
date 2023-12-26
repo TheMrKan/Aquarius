@@ -7,6 +7,7 @@ import traceback
 
 
 def log(controller_login: str, json_data: str):
+    return
     print(f"Log: {json_data}")
     try:
         parsed: Dict[str, Any] = json.loads(json_data)

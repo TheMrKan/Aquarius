@@ -31,7 +31,6 @@ DEBUG = os.environ.get("DJANGO_DEBUG")
 
 ALLOWED_HOSTS = ["192.168.137.1", "hd.tlt.ru", "127.0.0.1", "192.168.31.191", "*"]
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -69,6 +68,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'main.context_processors.protocols',
+                'main.context_processors.site_name'
             ],
         },
     },
@@ -132,10 +133,11 @@ LOGIN_REDIRECT_URL = '/'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
-STATIC_ROOT = BASE_DIR / "static/"
-print(STATIC_ROOT)
+STATICFILES_DIRS = [
+    BASE_DIR / "static"
+]
 
 
 # Default primary key field type

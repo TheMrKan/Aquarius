@@ -10,7 +10,7 @@ from main.consumers import ControllerConsumer
 import json
 import user_tools as utools
 import dataclasses
-import mysite.main.conf as conf
+import main.conf as conf
 
 DAYS = {'monday': 'Понедельник',
         'tuesday': 'Вторник',
@@ -118,8 +118,8 @@ def manual_activation_selector(request, mqtt_user, turn_off_all=False):
     if ControllerV2Manager.check_block(mqtt_user):
         return redirect("controller", mqtt_user)
 
-    channels = Channel.objects.filter(controller__mqtt_user=mqtt_user)
     cont = Controller.objects.get(mqtt_user=mqtt_user)
+    channels = cont.channels
 
     hide_channels_selector: bool = cont.version < 200
 
@@ -149,7 +149,7 @@ def channel_naming(request, mqtt_user):
         return redirect("controller", mqtt_user)
 
     controller: Controller = Controller.objects.get(mqtt_user=mqtt_user)
-    channels = Channel.objects.filter(controller=controller)
+    channels = controller.channels
 
     hide_channels_selector: bool = controller.version < 200
 
@@ -217,9 +217,10 @@ def controller(request, mqtt_user):
             received_time = request.POST.dict()["set_time"].split("-")
             instance.command_set_time(*[int(i) for i in received_time])
 
+    cont: Controller = Controller.objects.get(mqtt_user=mqtt_user)
     programs = Program.objects.filter(channel__controller__mqtt_user=mqtt_user)
-    channels = Channel.objects.filter(controller__mqtt_user=mqtt_user)
-    cont = Controller.objects.get(mqtt_user=mqtt_user)
+    channels = cont.channels
+    print([(c.name, c.number) for c in channels])
 
     hide_humidity = cont.version < 200
     hide_channels_selector: bool = cont.version < 200
@@ -237,7 +238,6 @@ def controller(request, mqtt_user):
         lines.append(Line(chn.name, chn.state, get_week(chn)))
 
     day = list(DAYS.values())[cont.day - 1] if cont.day <= len(DAYS) else "Ошибка"
-
     return render(request, 'controller.html',
                   {
                       'mqtt_user': mqtt_user,
@@ -251,14 +251,6 @@ def controller(request, mqtt_user):
                       "hidden_channel": hidden_channel,
                       "name": utools.get_controller_name(request.user, mqtt_user)
                     })
-
-
-@login_required
-def channels(request, mqtt_user):
-    if not utools.is_authentificated(request.user, mqtt_user):
-        return redirect("/")
-
-    channels = Channel.objects.filter(controller__mqtt_user=mqtt_user)
 
 
 @login_required
