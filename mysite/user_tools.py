@@ -50,25 +50,26 @@ def add_controller(user: User, mqtt_user: str, password: str, verbous_name: str)
             cdata.save()
             return
 
-    print(Controller.objects.all())
-    controller = Controller.objects.get(mqtt_user=mqtt_user)
+    try:
+        controller = Controller.objects.get(mqtt_user=mqtt_user)
 
-    ucontprefs = UserControllerPreferences(user_extension=user.userextension,
-                                           controller=controller,
-                                           mqtt_password=password,
-                                           verbous_name=verbous_name)
-    ucontprefs.save()
+        ucontprefs = UserControllerPreferences(user_extension=user.userextension,
+                                               controller=controller,
+                                               mqtt_password=password,
+                                               verbous_name=verbous_name)
+        ucontprefs.save()
+    except ObjectDoesNotExist:
+        print(f"Failed to add use rcontroller preferences: controller {mqtt_user} not found")
 
 
 def remove_controller(user: User, mqtt_user: str):
     try:
         ucontdata = user.userextension.usercontrollerpreferences_set.get(controller__mqtt_user=mqtt_user)
     except ObjectDoesNotExist:
-        print("error")
         return
 
     ucontdata.delete()
-    print("1:", get_available_controllers(user))
+
 
 def is_authentificated(user: User, mqtt_user: str) -> bool:
     try:
