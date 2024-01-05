@@ -207,6 +207,7 @@ body {
   padding: 8% 3% 8% 3%;
   margin: 3%;
   background-color: #2E8B57;
+  height: 90%;
 }
 
 .titlef {
@@ -508,3 +509,11 @@ input[type=checkbox]:checked + label:after,
 input[type=radio]:checked + label:after {
   opacity: 1;
 }/*# sourceMappingURL=style.css.map */
+
+.hyp {
+  width: 90%;
+  height: auto;
+  word-break: break-all;
+  word-wrap: break-word;
+  white-space: normal;
+}

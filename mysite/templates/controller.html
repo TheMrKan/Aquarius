@@ -26,6 +26,7 @@
 	var paused = false;
 	var hidden_channel = "{{ hidden_channel }}";
 
+	var time_sync_canceled = false;
 
 	function update_data_on_page(properties)
 	{
@@ -177,6 +178,11 @@
 
 	function check_controller_time()
 	{
+		if (time_sync_canceled)
+		{
+			return;
+		}
+
 		var device_time = new Date();
 		if (Math.abs(device_time - controller_time) > (1000 * 180))
 		{
@@ -191,7 +197,10 @@
   				xhr.open("POST", "{% url 'controller' mqtt_user %}");
   				xhr.send(formData);
 			}
-
+			else
+			{
+				time_sync_canceled = true;
+			}
 		}
 	}
 
@@ -227,7 +236,7 @@
 				<div class="page__element page__head">
 				 <div class="mhead">
 					<a target="_blank" href="https://hi-garden.ru/" class="mhead__logo xhref">Hi-Garden</a>
-					<div class="mhead__title">Aquarius Главная</Main></div>
+					<div class="mhead__title">Aquarius Главная</div>
 					<a href="{% url 'index' %}" class="mhead__manual xhref">&#10006;</a>
 				 </div>
 
@@ -313,7 +322,7 @@
 							<div class="status__column">
 
 								<div id="chn1_div" class="titlev channeloff">
-									<a id="chn1" onClick="javascript:redirect_to_channel(1);" href="#" class="myxhref">Канал 1</a>
+									<a id="chn1" onClick="javascript:redirect_to_channel(1);" href="#" class="myxhref hyp">Канал 1</a>
 									<div id="chn1_meandr" class="meandroff">_∏_∏_</div>
 								</div>
 
@@ -321,21 +330,21 @@
 
 							<div class="status__column">
 								<div id="chn2_div" class="titlev channeloff">
-									<a id="chn2" onClick="javascript:redirect_to_channel(2);" href="#" class="myxhref">Канал 2</a>
+									<a id="chn2" onClick="javascript:redirect_to_channel(2);" href="#" class="myxhref hyp">Канал 2</a>
 									<div id="chn2_meandr" class="meandroff">_∏_∏_</div>
 								</div>
 							</div>
 
 							<div class="status__column">
 								<div id="chn3_div" class="titlev channeloff">
-									<a id="chn3" onClick="javascript:redirect_to_channel(3);" href="#" class="myxhref">Канал 3</a>
+									<a id="chn3" onClick="javascript:redirect_to_channel(3);" href="#" class="myxhref hyp">Канал 3</a>
 									<div id="chn3_meandr" class="meandroff">_∏_∏_</div>
 								</div>
 							</div>
 
 							<div class="status__column">
 								<div id="chn4_div" class="titlev channeloff">
-									<a id="chn4" onClick="javascript:redirect_to_channel(4);" href="#" class="myxhref">Канал 4</a>
+									<a id="chn4" onClick="javascript:redirect_to_channel(4);" href="#" class="myxhref hyp">Канал 4</a>
 									<div id="chn4_meandr" class="meandroff">_∏_∏_</div>
 								</div>
 							</div>
@@ -346,28 +355,28 @@
 
 							<div class="status__column">
 								<div id="chn5_div" class="titlev channeloff">
-									<a id="chn5" onClick="javascript:redirect_to_channel(5);" href="#" class="myxhref">Канал 5</a>
+									<a id="chn5" onClick="javascript:redirect_to_channel(5);" href="#" class="myxhref hyp">Канал 5</a>
 									<div id="chn5_meandr" class="meandroff">_∏_∏_</div>
 								</div>
 							</div>
 
 							<div class="status__column">
 								<div id="chn6_div" class="titlev channeloff">
-									<a id="chn6" onClick="javascript:redirect_to_channel(6);" href="#" class="myxhref">Канал 6</a>
+									<a id="chn6" onClick="javascript:redirect_to_channel(6);" href="#" class="myxhref hyp">Канал 6</a>
 									<div id="chn6_meandr" class="meandroff">_∏_∏_</div>
 								</div>
 							</div>
 
 							<div class="status__column">
 								<div id="chn7_div" class="titlev channeloff">
-									<a id="chn7" onClick="javascript:redirect_to_channel(7);" href="#" class="myxhref">Канал 7</a>
+									<a id="chn7" onClick="javascript:redirect_to_channel(7);" href="#" class="myxhref hyp">Канал 7</a>
 									<div id="chn7_meandr" class="meandroff">_∏_∏_</div>
 								</div>
 							</div>
 
 							<div class="status__column">
 								<div id="chn8_div" class="titlev channeloff">
-									<a id="chn8" onClick="javascript:redirect_to_channel(8);" href="#" class="myxhref">Канал 8</a>
+									<a id="chn8" onClick="javascript:redirect_to_channel(8);" href="#" class="myxhref hyp">Канал 8</a>
 									<div id="chn8_meandr" class="meandroff">_∏_∏_</div>
 								</div>
 							</div>
@@ -378,7 +387,7 @@
 
 							<div class="status__column"  {% if hide_humidity %} style="height: 0;" {% endif %}>
 								<div class="titlev onledw">
-									<a href="{% url 'remote_blocks' mqtt_user %}" class="myxhref">Удаленные</a>
+									<a href="{% url 'remote_blocks' mqtt_user %}" class="myxhref hyp">Удаленные</a>
 									<div class="meandron">блоки</div>
 								</div>
 
@@ -386,21 +395,21 @@
 
 							<div class="status__column">
 								<div id="chn9_div" class="titlev channeloff">
-									<a id="chn9" onClick="javascript:redirect_to_channel(9);" href="#" class="myxhref">Канал 9</a>
+									<a id="chn9" onClick="javascript:redirect_to_channel(9);" href="#" class="myxhref hyp">Канал 9</a>
 									<div id="chn9_meandr" class="meandroff">_∏_∏_</div>
 								</div>
 							</div>
 
 							<div class="status__column">
 								<div id="chn10_div" class="titlev channeloff">
-									<a id="chn10" onClick="javascript:redirect_to_channel(10);" href="#" class="myxhref">Канал 10</a>
+									<a id="chn10" onClick="javascript:redirect_to_channel(10);" href="#" class="myxhref hyp">Канал 10</a>
 									<div id="chn10_meandr" class="meandroff">_∏_∏_</div>
 								</div>
 							</div>
 
 							<div class="status__column">
 								<div id="pump_div" class="titlev channeloff">
-									<a href="{% url 'pump' mqtt_user %}" class="myxhref">Насос</a>
+									<a href="{% url 'pump' mqtt_user %}" class="myxhref hyp">Насос</a>
 									<div class="meandroff">&nbsp;</div>
 								</div>
 
