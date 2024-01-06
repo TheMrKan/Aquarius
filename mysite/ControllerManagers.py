@@ -358,14 +358,14 @@ class ControllerV2Manager:
                     Program.objects.filter(channel=channel_model).delete()
 
                     c_properties = self.stashed_data[offset:offset+20]
-                    channel_model.temp_min = c_properties[0]
-                    channel_model.temp_max = c_properties[1]
+                    channel_model.temp_min = c_properties[0] if 0 <= c_properties[0] <= 50 else 10
+                    channel_model.temp_max = c_properties[1] if 0 < c_properties[1] <= 50 else 30
                     channel_model.meandr_on = c_properties[2]
                     channel_model.meaoff_cmin = c_properties[3]
                     channel_model.meaoff_cmax = c_properties[4]
                     channel_model.press_on = c_properties[5]
                     channel_model.press_off = c_properties[6]
-                    channel_model.season = c_properties[9]
+                    channel_model.season = c_properties[9] if 0 <= c_properties[9] <= 200 else 100
                     channel_model.rainsens = bool(c_properties[13])
                     channel_model.tempsens = c_properties[14]
                     channel_model.lowlevel = bool(c_properties[15])
@@ -482,14 +482,14 @@ class ControllerV2Manager:
                     Program.objects.filter(channel=channel_model).delete()
 
                     c_properties = self.stashed_data[offset:offset+20]
-                    channel_model.temp_min = c_properties[0]
-                    channel_model.temp_max = c_properties[1]
+                    channel_model.temp_min = c_properties[0] if 0 <= c_properties[0] <= 50 else 10
+                    channel_model.temp_max = c_properties[1] if 0 < c_properties[1] <= 50 else 30
                     channel_model.meandr_on = c_properties[2]
                     channel_model.meaoff_cmin = c_properties[3]
                     channel_model.meaoff_cmax = c_properties[4]
                     channel_model.press_on = c_properties[5]
                     channel_model.press_off = c_properties[6]
-                    channel_model.season = c_properties[9]
+                    channel_model.season = c_properties[9] if 0 <= c_properties[9] <= 200 else 100
                     channel_model.rainsens = bool(c_properties[13])
                     channel_model.tempsens = c_properties[14]
                     channel_model.lowlevel = bool(c_properties[15])
@@ -546,9 +546,8 @@ class ControllerV2Manager:
         return False
 
     def get_controller_properties(self) -> dict:
-        channels = Channel.objects.filter(controller__mqtt_user=self.data_model.mqtt_user)
+        channels = self.data_model.channels
         channels_state = [i.state for i in channels]
-
         properties = {
             "status": self.data_model.status,
             "hour": self.data_model.time.hour,
