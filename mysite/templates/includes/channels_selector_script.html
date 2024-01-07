@@ -52,18 +52,16 @@
                     if (channel_number <= channels_state.length)
 				    {
                         var className = "titlev channeloff";
-                        var classNameMeandr = "meandroff";
 
                         if (channels_state[channel_number - 1])
                         {
                             className = "titlev channelon";
-                            classNameMeandr = "meandron";
                         }
 
                         document.getElementById('chn' + i.toString() + "_div").className = className;
                         if (meandrs & channel_number <= channels_meandrs.length & channels_meandrs[channel_number-1])
                         {
-                            document.getElementById('chn' + i.toString() + "_meandr").className = classNameMeandr;
+                            document.getElementById('chn' + i.toString() + "_meandr").className = "meandron";
                         }
 				    }
                 }
