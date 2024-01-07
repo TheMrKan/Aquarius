@@ -59,10 +59,14 @@
                         }
 
                         document.getElementById('chn' + i.toString() + "_div").className = className;
+
+                        meandrsClassName = "meandroff";
                         if (meandrs & channel_number <= channels_meandrs.length & channels_meandrs[channel_number-1])
                         {
-                            document.getElementById('chn' + i.toString() + "_meandr").className = "meandron";
+                            meandrsClassName = "meandron";
                         }
+
+                        document.getElementById('chn' + i.toString() + "_meandr").className = meandrsClassName;
 				    }
                 }
 
