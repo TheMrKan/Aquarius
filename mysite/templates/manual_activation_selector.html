@@ -27,14 +27,14 @@
 	}
 
 	const socket = new WebSocket(
-            'ws://'
+            '{{ ws }}://'
             + window.location.host
             + '/ws/controller'
         );
 
 	socket.onopen = function(e)
 	{
-	  	socket.send(JSON.stringify({"mqtt_user": MQTT_USER, "command": "get_properties"}));
+	  	socket.send(JSON.stringify({"mqtt_user": mqtt_user, "command": "get_properties"}));
 	};
 
     socket.onmessage = function(event)

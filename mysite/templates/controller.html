@@ -25,6 +25,7 @@
 	var controller_time = new Date(load_time.getFullYear(), load_time.getMonth(), load_time.getDate(), 0, 0, 0);
 	var paused = false;
 	var hidden_channel = "{{ hidden_channel }}";
+	var blocked = false;
 
 	var time_sync_canceled = false;
 
@@ -207,12 +208,21 @@
 	var pattern = "{% url 'channel' mqtt_user '-to_replace-' %}"
 	function redirect_to_channel(num)
 	{
+		if (blocked)
+		{
+		    return;
+		}
+
 		let channel_num = current_page * 10 + num;
 		window.location.replace(pattern.replace("-to_replace-", channel_num.toString()));
 	}
 
 	function block_while_downloading()
 	{
+	    if (blocked)
+		{
+		    return;
+		}
 		if (window.confirm("Приложение будет недоступно до окончания скачивания. Продолжить?"))
 		{
 			blocked = true;
@@ -459,7 +469,7 @@
 							</div>
 
 							<div class="status__column">
-								<div class="titlew">And: site</div>
+								<div class="titlew">And: Web</div>
 							</div>
 
 							<div class="status__column">

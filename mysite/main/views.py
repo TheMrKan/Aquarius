@@ -522,9 +522,8 @@ def gantt(request, mqtt_user: str):
 
         return out
 
-    programs = Program.objects.filter(channel__controller__mqtt_user=mqtt_user)
-    channels = Channel.objects.filter(controller__mqtt_user=mqtt_user)
     controller = Controller.objects.get(mqtt_user=mqtt_user)
+    channels = controller.channels
 
     if controller.version < 200:
         channels = channels[:10]
