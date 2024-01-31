@@ -7,7 +7,7 @@ import datetime
 from bitstring import BitArray
 from django.contrib.auth.models import User
 import json
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from main.consumers import ControllerConsumer
 import threading
 import response_handler
@@ -27,6 +27,7 @@ class LimitOfProgramsException(Exception):
 class ControllerV2Manager:
 
     DEFAULT_HOST = "hd.tlt.ru"
+    DEFAULT_RESERVE_HOST = "hg.tlt.ru"
     DEFAULT_PORT = "18883"
     DEFAULT_PREFIX_PATTERN = "{user}/"
     DEFAULT_NAME_PATTERN = "Контроллер {user}"
@@ -51,7 +52,12 @@ class ControllerV2Manager:
     stashed_data: list = []
     last_command: str
     data_model: Controller
-    mqtt_manager: MQTTManager
+
+    main_mqtt_manager: MQTTManager
+    reserve_mqtt_manager: MQTTManager
+    mqtt_manager: Union[None, MQTTManager]
+    bad_mqtt_count: int
+    is_controller_connected: Union[None, bool]
 
     @staticmethod
     def check_block(user: str):
@@ -82,25 +88,29 @@ class ControllerV2Manager:
     @staticmethod
     def add(user: str, password: str, **kwargs):
         if ControllerV2Manager.get_instance(user, False) is None:
-            print("get instance is none")
             mqtt = MQTTManager.try_connect(kwargs.get("host", ControllerV2Manager.DEFAULT_HOST),
                                            kwargs.get("port", ControllerV2Manager.DEFAULT_PORT),
                                            user,
                                            password,
                                            kwargs.get("prefix", ControllerV2Manager.DEFAULT_PREFIX_PATTERN.format(user=user)))
-            if mqtt is not None:
+
+            reserve_mqtt = MQTTManager.try_connect(kwargs.get("host", ControllerV2Manager.DEFAULT_RESERVE_HOST),
+                                           kwargs.get("port", ControllerV2Manager.DEFAULT_PORT),
+                                           user,
+                                           password,
+                                           kwargs.get("prefix", ControllerV2Manager.DEFAULT_PREFIX_PATTERN.format(user=user)))
+            if mqtt is not None or reserve_mqtt is not None:
                 cm = ControllerV2Manager(kwargs.get("host", ControllerV2Manager.DEFAULT_HOST),
                                          kwargs.get("port", ControllerV2Manager.DEFAULT_PORT),
                                          user,
                                          password,
                                          kwargs.get("prefix", ControllerV2Manager.DEFAULT_PREFIX_PATTERN.format(user=user)),
-                                         mqtt)
+                                         mqtt,
+                                         reserve_mqtt)
                 if "email" in kwargs.keys():
                     cm.set_email(kwargs["email"])
                 if "cname" in kwargs.keys():
                     cm.set_name(kwargs["cname"])
-                cm.subscribe(mqtt)
-                cm.on_connected(mqtt)
                 return True
             else:
                 return False
@@ -115,13 +125,12 @@ class ControllerV2Manager:
             return False
         return data_model is not None and data_model.mqtt_user == mqtt_user and data_model.mqtt_password == password
 
-    def __init__(self, host: str, port: int,  controller_user: str, password: str, prefix: str, mqtt_manager: MQTTManager):
+    def __init__(self, host: str, port: int,  controller_user: str, password: str, prefix: str, mqtt_manager: MQTTManager, reserve_mqtt_manager: MQTTManager = None):
         ControllerV2Manager.instances[controller_user] = self
 
         try:
             self.data_model = Controller.objects.get(mqtt_user=controller_user)
         except ObjectDoesNotExist:
-            print("Create")
             self.data_model = Controller(mqtt_user=controller_user,
                                          mqtt_password=password,
                                          mqtt_host=host,
@@ -147,8 +156,12 @@ class ControllerV2Manager:
             except MultipleObjectsReturned:
                 Channel.objects.filter(controller=self.data_model, number=channel_num).delete()
 
-        self.mqtt_manager = mqtt_manager
+        self.mqtt_manager = None
+        self.main_mqtt_manager = mqtt_manager
+        self.reserve_mqtt_manager = reserve_mqtt_manager
         self.user = controller_user
+        self.bad_mqtt_count = 0
+        self.is_controller_connected = None
         self.wrong_packets = 0
         self.previous_time = datetime.time(0, 0, 0)
         self.command_response_handlers = {
@@ -156,19 +169,46 @@ class ControllerV2Manager:
             "0.0.8": self.command_get_channels_response,
         }
 
+        self.subscribe_init()
+
     def unload(self) -> None:
         self.send_status(False)
         self.mqtt_manager.unsubscribe(self.topic_receive)
         self.mqtt_manager.unsubscribe(self.topic_status)
-        self.mqtt_manager.unsubscribe(self.topic_log)
+        del ControllerV2Manager.instances[self.user]
         del self
 
-    def subscribe(self, mqtt: MQTTManager) -> None:
-        import history.logger as history_logger
-        mqtt.subscribe(self.topic_receive, self.handle_message)
-        mqtt.subscribe(self.topic_status, self.handle_status_message)
-        mqtt.subscribe(self.topic_log, lambda m, login, data: history_logger.log(login, data))
-        mqtt.onConnected = self.on_connected
+    def subscribe(self):
+        self.mqtt_manager.subscribe(self.topic_receive, self.handle_message)
+        self.mqtt_manager.subscribe(self.topic_status, self.handle_status_message)
+
+    def subscribe_init(self) -> None:
+        if self.main_mqtt_manager:
+            self.main_mqtt_manager.subscribe(self.topic_status, self.handle_init_state_message)
+        else:
+            self.bad_mqtt_count += 1
+        if self.reserve_mqtt_manager:
+            self.reserve_mqtt_manager.subscribe(self.topic_status, self.handle_init_state_message)
+        else:
+            self.bad_mqtt_count += 1
+
+        if self.bad_mqtt_count >= 2:
+            self.mark_as_not_connected()
+
+    def handle_init_state_message(self, manager: MQTTManager, user: str, msg: str):
+        print(f"Received init status message from {manager.host}: {msg}")
+        if msg.isdigit() and int(msg):
+            self.mqtt_manager = manager
+            self.is_controller_connected = True
+            self.subscribe()
+        else:
+            self.bad_mqtt_count += 1
+            if self.bad_mqtt_count >= 2:
+                self.mark_as_not_connected()
+
+    def mark_as_not_connected(self):
+        self.mqtt_manager = self.main_mqtt_manager or self.reserve_mqtt_manager
+        self.is_controller_connected = False
 
     def send_command(self, request_code: str, payload: str = ""):
         if not self.blocked:
@@ -316,17 +356,12 @@ class ControllerV2Manager:
             packet_number = parsed_message[0]
 
             del parsed_message[0]
-            print(packet_number, self.packet + 1, len(parsed_message))
             if packet_number != self.packet + 1 or len(parsed_message) != bytes_in_packet:
-                if self.wrong_packets >= 5:
-                    self.packet = -1
-                    self.stashed_data = []
-                    self.blocked = False
-                    ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
-                    return True
-                else:
-                    self.wrong_packets += 1
-                    return False
+                self.packet = -1
+                self.stashed_data = []
+                self.blocked = False
+                ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
+                return True
 
             missed_bytes = max((packet_number - self.packet - 1), 0) * bytes_in_packet
             self.stashed_data += [0] * missed_bytes
@@ -435,16 +470,12 @@ class ControllerV2Manager:
             del parsed_message[0]
             print(packet_number, self.packet + 1, len(parsed_message))
             if packet_number != self.packet + 1 or len(parsed_message) != bytes_in_packet:
-                if self.wrong_packets >= 5:
-                    self.packet = -1
-                    self.stashed_data = []
-                    self.blocked = False
-                    ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
-                    self.wrong_packets = 0
-                    return True
-                else:
-                    self.wrong_packets += 1
-                    return False
+                self.packet = -1
+                self.stashed_data = []
+                self.blocked = False
+                ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
+                self.wrong_packets = 0
+                return True
 
             if packet_number == 40:
                 self.blocked = False
@@ -696,8 +727,6 @@ class ControllerV2Manager:
 
         self.send_command("0.1.1", ".".join([".".join([str(i) for i in f"{rb:0>4}"]) for rb in (rblock0, rblock1, rblock2)]))
 
-    def on_connected(self, mqtt: MQTTManager):
-        self.command_get_state()
 
     def get_check_sum(self, *data: str) -> (int, int):
         check_sum = 0

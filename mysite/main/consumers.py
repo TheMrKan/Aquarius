@@ -73,11 +73,15 @@ class ControllerConsumer(WebsocketConsumer):
         if instance is None:
             self.send(text_data=json.dumps({'error': "invalid prefix"}))
             return
-        instance.send_status(True)
-        if command == "download_data":
-            instance.command_get_channels()
-        elif command == "get_properties":
-            instance.command_get_state()
-        elif command == "set_name" and "data" in json_data.keys():
-            user_tools.set_controller_name(self.scope['user'], mqtt_user, json_data["data"])
+
+        if instance.is_controller_connected is not None and instance.is_controller_connected:
+            instance.send_status(True)
+            if command == "download_data":
+                instance.command_get_channels()
+            elif command == "get_properties":
+                instance.command_get_state()
+            elif command == "set_name" and "data" in json_data.keys():
+                user_tools.set_controller_name(self.scope['user'], mqtt_user, json_data["data"])
+        else:
+            self.send(text_data=json.dumps({'error': "not connected"}))
 

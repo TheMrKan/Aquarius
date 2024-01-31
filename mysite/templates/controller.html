@@ -157,6 +157,15 @@
     socket.onmessage = function(event)
     {
     	var data = JSON.parse(event.data);
+    	if (data["error"] != undefined)
+    	{
+    		console.log("WebSocket error received: " + data["error"])
+    		if (data["error"] == "not connected")
+    		{
+    			alert("Контроллер не подключен. Данные не могут быть обновлены.")
+    			socket.close()
+    		}
+    	}
     	if (data["type"] == "properties")
     	{
     		update_data_on_page(data);

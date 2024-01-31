@@ -207,8 +207,6 @@ def controller(request, mqtt_user):
         return out
 
     instance = ControllerV2Manager.get_instance(mqtt_user)
-    if instance is not None:
-        instance.command_get_state()
 
     if request.method == "POST":
         if "set_time" in request.POST.dict().keys():

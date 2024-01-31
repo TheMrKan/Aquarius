@@ -66,7 +66,7 @@ class MQTTManager:
 
 
     def on_message(self, userdata, message):
-        #print(f'MQTT ({self.user}) - [{message.topic.replace(self.prefix, "")}] - {str(message.payload.decode("utf-8")).strip()}')
+        print(f'MQTT ({self.user}) - [{message.topic.replace(self.prefix, "")}] - {str(message.payload.decode("utf-8")).strip()}')
         if message.topic.replace(self.prefix, '') in self.topicHandlers.keys():
             #print("Handle:", str(message.payload.decode("utf-8")).strip())
             self.topicHandlers[message.topic.replace(self.prefix, "")](self, self.user, str(message.payload.decode("utf-8")).strip())
@@ -81,10 +81,22 @@ class MQTTManager:
 
     @staticmethod
     def try_connect(host: str, port: int, user: str, password: str, prefix: str):
-        #try:
+        try:
             port = int(port)
             m = MQTTManager(host, port, user, password, prefix)
             s = m.connect()
             return m if s else None
-        #except:
-            #return None
+        except:
+            return None
+
+
+def test():
+    manager = MQTTManager("hd.tlt.ru", 18883, "21E", "180690033", "21E/")
+    manager.connect()
+    manager.subscribe("tele/Aquarius/LWT", lambda mng, usr, msg: print(lwt := int(msg)) or True)
+    print(manager.lwt)
+
+    manager.client.loop_forever()
+
+if __name__ == "__main__":
+    test()
