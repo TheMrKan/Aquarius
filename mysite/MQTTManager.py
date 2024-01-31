@@ -33,7 +33,8 @@ class MQTTManager:
         self.client.subscribe(self.prefix + topic)
 
     def unsubscribe(self, topic):
-        del self.topicHandlers[topic]
+        if topic in self.topicHandlers.keys():
+            del self.topicHandlers[topic]
         self.client.unsubscribe(self.prefix + topic)
 
     def on_connected(self, client, userdata, flags, rc):
@@ -63,6 +64,11 @@ class MQTTManager:
         while self.trying > 0:
             pass
         return self.connected
+
+    def disconnect(self):
+        self.client.disconnect()
+        self.topicHandlers.clear()
+        del self.client
 
 
     def on_message(self, userdata, message):

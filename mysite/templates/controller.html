@@ -162,8 +162,9 @@
     		console.log("WebSocket error received: " + data["error"])
     		if (data["error"] == "not connected")
     		{
-    			alert("Контроллер не подключен. Данные не могут быть обновлены.")
-    			socket.close()
+
+    			alert(`Контроллер не подключен. Данные не могут быть обновлены.\nВремя отключения контроллера от брокера: ${data["time"]}\nIP: ${data["ip"]}\nRSSI: ${data["rssi"]}`);
+    			window.location.replace("{% url 'index' %}");
     		}
     	}
     	if (data["type"] == "properties")

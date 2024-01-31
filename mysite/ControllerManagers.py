@@ -7,11 +7,13 @@ import datetime
 from bitstring import BitArray
 from django.contrib.auth.models import User
 import json
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Dict, Any
 from main.consumers import ControllerConsumer
 import threading
 import response_handler
 import traceback
+from threading import Thread
+import time
 
 def try_int(i):
     try:
@@ -26,11 +28,12 @@ class LimitOfProgramsException(Exception):
 
 class ControllerV2Manager:
 
-    DEFAULT_HOST = "hd.tlt.ru"
+    DEFAULT_HOST = "hhd.tlt.ru"
     DEFAULT_RESERVE_HOST = "hg.tlt.ru"
     DEFAULT_PORT = "18883"
     DEFAULT_PREFIX_PATTERN = "{user}/"
     DEFAULT_NAME_PATTERN = "Контроллер {user}"
+    INACTIVITY_TIME = 120
 
     instances = {}
 
@@ -40,6 +43,7 @@ class ControllerV2Manager:
     topic_status = "tele/Aquarius/LWT"
     topic_send_status = "smart_LWT"
     topic_log = "tele/Aquarius/SENSOR"
+    topic_param = "tele/Aquarius/PARAM"
 
     pump_channel_number = 10
     max_programs_for_channel = 14
@@ -58,6 +62,9 @@ class ControllerV2Manager:
     mqtt_manager: Union[None, MQTTManager]
     bad_mqtt_count: int
     is_controller_connected: Union[None, bool]
+
+    last_params: Dict[str, Any]
+    last_activity: datetime.datetime
 
     @staticmethod
     def check_block(user: str):
@@ -156,6 +163,12 @@ class ControllerV2Manager:
             except MultipleObjectsReturned:
                 Channel.objects.filter(controller=self.data_model, number=channel_num).delete()
 
+        self.last_params = {}
+        self.update_last_activity()
+
+        thread = Thread(target=self.activity_checker)
+        thread.start()
+
         self.mqtt_manager = None
         self.main_mqtt_manager = mqtt_manager
         self.reserve_mqtt_manager = reserve_mqtt_manager
@@ -171,10 +184,23 @@ class ControllerV2Manager:
 
         self.subscribe_init()
 
+    def activity_checker(self):
+        while self is not None:
+            time.sleep(10)
+            if (datetime.datetime.now() - self.last_activity).total_seconds() > self.INACTIVITY_TIME:
+                self.unload()
+                return
+
+    def update_last_activity(self):
+        self.last_activity = datetime.datetime.now()
+
     def unload(self) -> None:
+        print(f"Unloading controller manager for {self.user}")
         self.send_status(False)
-        self.mqtt_manager.unsubscribe(self.topic_receive)
-        self.mqtt_manager.unsubscribe(self.topic_status)
+        if self.main_mqtt_manager is not None:
+            self.main_mqtt_manager.disconnect()
+        if self.reserve_mqtt_manager is not None:
+            self.reserve_mqtt_manager.disconnect()
         del ControllerV2Manager.instances[self.user]
         del self
 
@@ -185,10 +211,12 @@ class ControllerV2Manager:
     def subscribe_init(self) -> None:
         if self.main_mqtt_manager:
             self.main_mqtt_manager.subscribe(self.topic_status, self.handle_init_state_message)
+            self.main_mqtt_manager.subscribe(self.topic_param, self.handle_param_message)
         else:
             self.bad_mqtt_count += 1
         if self.reserve_mqtt_manager:
             self.reserve_mqtt_manager.subscribe(self.topic_status, self.handle_init_state_message)
+            self.reserve_mqtt_manager.subscribe(self.topic_param, self.handle_param_message)
         else:
             self.bad_mqtt_count += 1
 
@@ -206,11 +234,20 @@ class ControllerV2Manager:
             if self.bad_mqtt_count >= 2:
                 self.mark_as_not_connected()
 
+    def handle_param_message(self, manager: MQTTManager, user: str, msg: str):
+        try:
+            self.last_params = json.loads(msg)
+        except:
+            print("Failed to parse PARAM message")
+            traceback.print_exc()
+
     def mark_as_not_connected(self):
         self.mqtt_manager = self.main_mqtt_manager or self.reserve_mqtt_manager
         self.is_controller_connected = False
 
     def send_command(self, request_code: str, payload: str = ""):
+        self.update_last_activity()
+
         if not self.blocked:
             msg = self.wrap_command(request_code, payload)
             self.last_command = request_code
@@ -225,6 +262,8 @@ class ControllerV2Manager:
             self.command_turn_on_channel(i.number, 0)
 
     def send_status(self, status: bool):
+        self.update_last_activity()
+
         print("Send status:", status)
         self.is_user_connected = status
         self.mqtt_manager.send(self.topic_send_status, str(int(status)), retain=True)
@@ -322,6 +361,8 @@ class ControllerV2Manager:
         return prg
 
     def remove_program(self, channel_num: int, prg_id: int):
+        self.update_last_activity()
+
         try:
             program = Program.objects.get(id=prg_id)
         except ObjectDoesNotExist:
@@ -747,7 +788,6 @@ class ControllerV2Manager:
                                          })
 
     def handle_status_message(self, mqtt: MQTTManager, controller_prefix: str, data: str) -> None:
-        print("Handle status data:", data)
         st = try_int(data)
         self.data_model.status = int(bool(st))
         self.data_model.save()

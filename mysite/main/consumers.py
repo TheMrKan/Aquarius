@@ -55,8 +55,6 @@ class ControllerConsumer(WebsocketConsumer):
         from ControllerManagers import ControllerV2Manager
         import user_tools
 
-        print("Received")
-
         json_data = json.loads(text_data)
         if "mqtt_user" not in json_data.keys() or "command" not in json_data:
             self.send(text_data=json.dumps({'error': "invalid syntax"}))
@@ -83,5 +81,8 @@ class ControllerConsumer(WebsocketConsumer):
             elif command == "set_name" and "data" in json_data.keys():
                 user_tools.set_controller_name(self.scope['user'], mqtt_user, json_data["data"])
         else:
-            self.send(text_data=json.dumps({'error': "not connected"}))
+            l_time = instance.last_params.get("Ntp", None)
+            l_ip = instance.last_params.get("ip", None)
+            l_rssi = instance.last_params.get("RSSI", None)
+            self.send(text_data=json.dumps({'error': "not connected", "time": l_time, "ip": l_ip, "rssi": l_rssi}))
 
