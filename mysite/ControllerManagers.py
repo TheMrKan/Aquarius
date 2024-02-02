@@ -28,8 +28,8 @@ class LimitOfProgramsException(Exception):
 
 class ControllerV2Manager:
 
-    DEFAULT_HOST = "hd.tlt.ru"
-    DEFAULT_RESERVE_HOST = "hg.tlt.ru"
+    DEFAULT_HOST = "hg.tlt.ru"
+    DEFAULT_RESERVE_HOST = "hd.tlt.ru"
     DEFAULT_PORT = "18883"
     DEFAULT_PREFIX_PATTERN = "{user}/"
     DEFAULT_NAME_PATTERN = "Контроллер {user}"
