@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load template_tags %}
 <html lang="ru">
 <head>
 	<meta charset="UTF-8">
@@ -42,6 +43,24 @@ tr {
 .graph-header {
     border-bottom: 2px solid gray;
 }
+
+.graph-right-highlighted {
+    border-right: 2px solid #c9be53;
+}
+
+.graph-left-highlighted {
+    border-left: 2px solid #c9be53;
+}
+
+.graph-header-highlighted {
+    border-bottom: 2px solid #c9be53;
+}
+
+.text_highlighted {
+    color: #c9be53;
+}
+
+
 </style>
 
 <script>
@@ -86,27 +105,34 @@ tr {
     <thead class="graph-header">
         <tr class="graph">
             <th>Номер канала</th>
-            <th colspan="24" style="width: 13%">Понедельник</th>
-            <th colspan="24" style="width: 13%">Вторник</th>
-            <th colspan="24" style="width: 13%">Среда</th>
-            <th colspan="24" style="width: 13%">Четверг</th>
-            <th colspan="24" style="width: 13%">Пятница</th>
-            <th colspan="24" style="width: 13%">Суббота</th>
-            <th colspan="24" style="width: 13%">Воскресенье</th>
+            <th colspan="24" {% if day_of_week == 0 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Понедельник</th>
+            <th colspan="24" {% if day_of_week == 1 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Вторник</th>
+            <th colspan="24" {% if day_of_week == 2 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Среда</th>
+            <th colspan="24" {% if day_of_week == 3 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Четверг</th>
+            <th colspan="24" {% if day_of_week == 4 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Пятница</th>
+            <th colspan="24" {% if day_of_week == 5 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Суббота</th>
+            <th colspan="24" {% if day_of_week == 6 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Воскресенье</th>
+            <th colspan="24" {% if day_of_week == 0 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Понедельник</th>
+            <th colspan="24" {% if day_of_week == 1 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Вторник</th>
+            <th colspan="24" {% if day_of_week == 2 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Среда</th>
+            <th colspan="24" {% if day_of_week == 3 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Четверг</th>
+            <th colspan="24" {% if day_of_week == 4 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Пятница</th>
+            <th colspan="24" {% if day_of_week == 5 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Суббота</th>
+            <th colspan="24" {% if day_of_week == 6 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Воскресенье</th>
         </tr>
     </thead>
     <tbody>
         {% for line in lines_week %}
-            <tr {% if forloop.last %} style="border-bottom: 2px solid gray" {% endif %}>
+            <tr {% if forloop.last %} class="graph-header" {% endif %}>
                 <th>#{{ forloop.counter }}</th>
                 {% for week in line %}
                     {% for h in week %}
                         {% if forloop.first %}
-                            <th class="graph-left" {% if h.active == 1 %} style="background: green;" onclick="move_to_prg({{h.chn}}, {{h.prg}});" {% endif %}></th>
+                            <th class="graph-left{% if forloop.parentloop.counter0|mod:7 == day_of_week %}-highlighted {% if forloop.parentloop.parentloop.last %} graph-header-highlighted {% endif %}{% endif %}" {% if h.active == 1 %} style="background: green;" onclick="move_to_prg({{h.chn}}, {{h.prg}});" {% endif %}></th>
                         {% elif forloop.last %}
-                            <th class="graph-right" {% if h.active == 1 %} style="background: green;" onclick="move_to_prg({{h.chn}}, {{h.prg}});"{% endif %}></th>
+                            <th class="{% if forloop.parentloop.counter0|add:1|mod:7 != day_of_week %} graph-right{% if forloop.parentloop.counter0|mod:7 == day_of_week %}-highlighted {% if forloop.parentloop.parentloop.last %} graph-header-highlighted {% endif %}{% endif %}{% endif %}" {% if h.active == 1 %} style="background: green;" onclick="move_to_prg({{h.chn}}, {{h.prg}});"{% endif %}></th>
                         {% else %}
-                            <th {% if h.active == 1 %} style="background: green;" onclick="move_to_prg({{h.chn}}, {{h.prg}});"{% endif %}></th>
+                            <th {% if forloop.parentloop.parentloop.last and forloop.parentloop.counter0|mod:7 == day_of_week %} class="graph-header-highlighted" {% endif %} {% if h.active == 1 %} style="background: green;" onclick="move_to_prg({{h.chn}}, {{h.prg}});"{% endif %}></th>
                         {% endif %}
                     {% endfor %}
                 {% endfor %}

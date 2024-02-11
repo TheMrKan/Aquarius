@@ -504,7 +504,8 @@ def gantt(request, mqtt_user: str):
             l += 1
         return l
 
-    def get_week(chn):
+    def get_week(chn, week):
+        week_bit_mask = 2 if week == 0 else 1    # '10' or '01'
         prgs = Program.objects.filter(channel=chn)
         out = []
         for i in range(7):
@@ -512,12 +513,12 @@ def gantt(request, mqtt_user: str):
             for j in range(24):
                 out[i].append(Hour(0, 0, False))
         for p in prgs:
-            days = list(p.days)
-            for d in days:
-                for i, h in enumerate(get_day(p.hour, get_h_len(p.t_max), chn.number, p.id)):
-                    if not out[int(d) - 1][i].active:
-                        out[int(d) - 1][i] = h
-
+            if p.weeks & week_bit_mask:
+                days = list(p.days)
+                for d in days:
+                    for i, h in enumerate(get_day(p.hour, get_h_len(p.t_max), chn.number, p.id)):
+                        if not out[int(d) - 1][i].active:
+                            out[int(d) - 1][i] = h
         return out
 
     controller = Controller.objects.get(mqtt_user=mqtt_user)
@@ -528,12 +529,13 @@ def gantt(request, mqtt_user: str):
 
     lines = []
     for chn in channels:
-        lines.append(get_week(chn))
+        lines.append(get_week(chn, 0) + get_week(chn, 1))
 
     return render(request, 'gantt.html',
                   {
                       'mqtt_user': mqtt_user,
-                      'lines_week': lines
+                      'lines_week': lines,
+                      'day_of_week': datetime.now().weekday()
                    })
 
 
