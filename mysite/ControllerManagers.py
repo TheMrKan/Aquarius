@@ -26,6 +26,10 @@ class LimitOfProgramsException(Exception):
     pass
 
 
+class IncorrectCredentialsException(Exception):
+    pass
+
+
 class ControllerV2Manager:
 
     DEFAULT_HOST = "hg.tlt.ru"
@@ -82,10 +86,12 @@ class ControllerV2Manager:
         elif _filtered_controllers.exists() and create:
             data_model = _filtered_controllers[0]
             if ControllerV2Manager.check_auth(data_model.mqtt_user, data_model.mqtt_password):
-                print("Auth: OK")
-                if ControllerV2Manager.add(data_model.mqtt_user, data_model.mqtt_password):
-                    return ControllerV2Manager.instances[user]
-                else:
+                try:
+                    if ControllerV2Manager.add(data_model.mqtt_user, data_model.mqtt_password):
+                        return ControllerV2Manager.instances[user]
+                    else:
+                        return None
+                except IncorrectCredentialsException:
                     return None
             else:
                 return None
@@ -95,17 +101,19 @@ class ControllerV2Manager:
     @staticmethod
     def add(user: str, password: str, **kwargs):
         if ControllerV2Manager.get_instance(user, False) is None:
-            mqtt = MQTTManager.try_connect(kwargs.get("host", ControllerV2Manager.DEFAULT_HOST),
+            mqtt, ic = MQTTManager.try_connect(kwargs.get("host", ControllerV2Manager.DEFAULT_HOST),
                                            kwargs.get("port", ControllerV2Manager.DEFAULT_PORT),
                                            user,
                                            password,
                                            kwargs.get("prefix", ControllerV2Manager.DEFAULT_PREFIX_PATTERN.format(user=user)))
 
-            reserve_mqtt = MQTTManager.try_connect(kwargs.get("host", ControllerV2Manager.DEFAULT_RESERVE_HOST),
+            reserve_mqtt, icr = MQTTManager.try_connect(kwargs.get("host", ControllerV2Manager.DEFAULT_RESERVE_HOST),
                                            kwargs.get("port", ControllerV2Manager.DEFAULT_PORT),
                                            user,
                                            password,
                                            kwargs.get("prefix", ControllerV2Manager.DEFAULT_PREFIX_PATTERN.format(user=user)))
+            if ic and icr:
+                raise IncorrectCredentialsException()
             if mqtt is not None or reserve_mqtt is not None:
                 cm = ControllerV2Manager(kwargs.get("host", ControllerV2Manager.DEFAULT_HOST),
                                          kwargs.get("port", ControllerV2Manager.DEFAULT_PORT),

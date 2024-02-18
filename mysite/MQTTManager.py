@@ -1,3 +1,4 @@
+from __future__ import annotations
 import datetime
 import time
 from bitstring import BitStream, BitArray
@@ -18,6 +19,7 @@ class MQTTManager:
     topicHandlers = {}
     connected = False
     trying = 2
+    incorrect_credentials: bool
 
     def send(self, topic, data, retain=False):
         if self.client is None:
@@ -38,10 +40,13 @@ class MQTTManager:
         self.client.unsubscribe(self.prefix + topic)
 
     def on_connected(self, client, userdata, flags, rc):
+        # rc = 0 - подключено
+        # rc = 5 - неправильный логин или пароль
         if self.trying > 0:
             self.trying -= 1
         else:
             return False
+        print(client, userdata, flags, rc)
         if rc == 0:
             print(f'MQTT: Connected to {self.user}@{self.host}:{self.port}')
             # from main.models import Controller, Channel, Program
@@ -51,6 +56,7 @@ class MQTTManager:
             self.trying = 0
             return True
         else:
+            self.incorrect_credentials = rc == 5
             self.connected = False
             return False
 
@@ -84,14 +90,15 @@ class MQTTManager:
         self.user = user
         self.password = password
         self.prefix = prefix
+        self.incorrect_credentials = False
 
     @staticmethod
-    def try_connect(host: str, port: int, user: str, password: str, prefix: str):
+    def try_connect(host: str, port: int, user: str, password: str, prefix: str) -> tuple[MQTTManager | None, bool]:
         try:
             port = int(port)
             m = MQTTManager(host, port, user, password, prefix)
             s = m.connect()
-            return m if s else None
+            return m if s else None, m.incorrect_credentials
         except:
             return None
 
@@ -99,8 +106,7 @@ class MQTTManager:
 def test():
     manager = MQTTManager("hd.tlt.ru", 18883, "21E", "180690033", "21E/")
     manager.connect()
-    manager.subscribe("tele/Aquarius/LWT", lambda mng, usr, msg: print(lwt := int(msg)) or True)
-    print(manager.lwt)
+
 
     manager.client.loop_forever()
 

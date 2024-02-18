@@ -8,7 +8,14 @@ from dataclasses import dataclass
 from django.core.exceptions import ObjectDoesNotExist
 
 
-def get_available_controllers(user: User) -> Dict[str, str]:
+@dataclass
+class AvailableController:
+    mqtt_user: str
+    name: str
+    mqtt_password: str
+
+
+def get_available_controllers(user: User) -> List[AvailableController]:
     """
     Возвращает сохраненные у пользователя контроллеры.\n
     Формат: {"mqtt_user": "verbous_name"}
@@ -20,14 +27,14 @@ def get_available_controllers(user: User) -> Dict[str, str]:
     except ObjectDoesNotExist:
         userextension = UserExtension(user=user)
         userextension.save()
-        return {}
+        return []
 
-    available_controllers = {}
+    available_controllers = []
 
     for cdata in saved_controllers:
 
         if cdata.mqtt_password == cdata.controller.mqtt_password:
-            available_controllers[cdata.controller.mqtt_user] = cdata.verbous_name
+            available_controllers.append(AvailableController(cdata.controller.mqtt_user, cdata.verbous_name, cdata.controller.mqtt_password))
         else:
             cdata.delete()
 

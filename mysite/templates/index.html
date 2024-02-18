@@ -21,6 +21,20 @@
                 window.location.replace(pattern.replace('replace', mqtt_user))
             }
         }
+
+        function change_credentials_visibility(element)
+        {
+            var els = element.getElementsByTagName("span")
+            var creds = els[els.length - 1];
+            if (creds.style.display == "none")
+            {
+                creds.style.display = "flex";
+            }
+            else
+            {
+                creds.style.display = "none";
+            }
+        }
     </script>
     <div class="wrapper">
         <div class="page">
@@ -81,6 +95,11 @@
                                         </div>
                                         <div class="status__column">
                                             <div class="titlew">Чтобы удалить запись,<br>нажмите <span style="color: red">&#9003;</span></div>
+                                            {% if status_message == 1 %}
+                                                <div class="titlew" style="color: #2bb537"><u>Контроллер добавлен</u></div>
+                                            {% elif status_message == 2 %}
+                                                <div class="titlew" style="color: #dc3838"><u>Неверное имя пользователя<br>или пароль</u></div>
+                                            {% endif %}
                                         </div>
                                     </div>
 
@@ -88,8 +107,17 @@
                                         <div class="titlew" style="margin-left: 50px;">
                                             {% if controllers|length > 0 %}
                                             <ul>
-                                                {% for mqtt_user, name in controllers.items %}
-                                                <li style="list-style-type: decimal;  margin-bottom: 30px;"><a style="color: #FFFFBB" href="controllers/{{ mqtt_user }}">{{ name }}</a><span style="margin-left: 100px;"><a style="color: red" onclick="javascript:delete_controller('{{mqtt_user}}', '{{name}}')" href="#">&#9003;</a></span></li>
+                                                {% for cnt in controllers %}
+                                                <li style="list-style-type: decimal;  margin-bottom: 30px;">
+                                                    <a style="color: #FFFFBB" href="controllers/{{ cnt.mqtt_user }}">{{ cnt.name }}</a>
+                                                    <span style="margin-left: 100px;">
+                                                        <a style="color: red; text-decoration: none; font-size: 120%;" onclick="javascript:delete_controller('{{cnt.mqtt_user}}', '{{cnt.name}}')" href="#">&#9003;</a>
+                                                    </span>
+                                                    <span style="margin-left: 20px;">
+                                                        <a style="color: white; font-weight: 1; font-size: 160%; text-decoration: none; height: 70%" onclick="javascript:change_credentials_visibility(this.parentElement.parentElement)" href="#">&#128065;</a>
+                                                    </span>
+                                                    <span style="display: none; margin-left 0; margin-right: auto; text-align: left;"><br>Пользователь: {{ cnt.mqtt_user }}&emsp;&emsp;&emsp;Пароль: {{ cnt.mqtt_password }}</span>
+                                                </li>
                                                 {% endfor %}
                                             </ul>
                                             {% else %}

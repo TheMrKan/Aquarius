@@ -5,7 +5,7 @@ from .models import Controller, Channel, Program, UserExtension
 from operator import add
 from datetime import datetime, time, timedelta
 import time
-from ControllerManagers import ControllerV2Manager, LimitOfProgramsException
+from ControllerManagers import ControllerV2Manager, LimitOfProgramsException, IncorrectCredentialsException
 from main.consumers import ControllerConsumer
 import json
 import user_tools as utools
@@ -25,20 +25,26 @@ DAYS = {'monday': 'Понедельник',
 def index(request):
     available_controllers = utools.get_available_controllers(request.user)
 
+    status_message = 0
     if request.method == "POST":
         values = request.POST.dict()
         if all(k in values.keys() for k in ("user", "password")):
+            if not any([i.mqtt_user == values["user"] for i in available_controllers]):    # исключаем возможность повторного добавления одного и того-же контроллера
+                try:
+                    if ControllerV2Manager.add(values["user"], values["password"]):
+                        utools.add_controller(request.user, values["user"], values["password"], values.get("cname", f"Контроллер {values['user']}"))
+                        available_controllers.append(utools.AvailableController(values["user"], values.get("cname", f"Контроллер {values['user']}"), values["password"]))
+                        status_message = 1
+                except IncorrectCredentialsException:
+                    status_message = 2
 
-            if not values["user"] in available_controllers.keys():    # исключаем возможность повторного добавления одного и того-же контроллера
-                if ControllerV2Manager.add(values["user"], values["password"]):
-                    utools.add_controller(request.user, values["user"], values["password"], values.get("cname", f"Контроллер {values['user']}"))
-                    available_controllers[values["user"]] = values.get("cname", f"Контроллер {values['user']}")
     response = render(request, 'index.html',
                     {
                         'controllers': available_controllers,
                         'test_controller_name': conf.TEST_CONTROLLER_NAME,
                         'test_controller_mqtt_user': conf.TEST_CONTROLLER_USER,
-                        'test_controller_mqtt_password': conf.TEST_CONTROLLER_PASSWORD
+                        'test_controller_mqtt_password': conf.TEST_CONTROLLER_PASSWORD,
+                        'status_message': status_message
                     })
 
     return response
