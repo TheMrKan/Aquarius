@@ -104,22 +104,27 @@ tr {
     </colgroup>
     <thead class="graph-header">
         <tr class="graph">
-            <th>Номер канала</th>
-            <th colspan="24" {% if day_of_week == 0 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Понедельник</th>
+
+        <th rowspan="2">Номер канала</th>
+        <th colspan="168" style="width: 13%; border-left: 2px solid gray; border-bottom: 2px solid gray">Четная неделя</th>
+        <th colspan="168" style="width: 13%; border-left: 2px solid gray; border-bottom: 2px solid gray">Нечетная неделя</th>
+    </tr>
+    <tr>
+        <th colspan="24" {% if day_of_week == 0 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%; border-left: 2px solid gray">Понедельник</th>
             <th colspan="24" {% if day_of_week == 1 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Вторник</th>
             <th colspan="24" {% if day_of_week == 2 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Среда</th>
             <th colspan="24" {% if day_of_week == 3 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Четверг</th>
             <th colspan="24" {% if day_of_week == 4 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Пятница</th>
             <th colspan="24" {% if day_of_week == 5 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Суббота</th>
             <th colspan="24" {% if day_of_week == 6 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Воскресенье</th>
-            <th colspan="24" {% if day_of_week == 0 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Понедельник</th>
+            <th colspan="24" {% if day_of_week == 0 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%; border-left: 2px solid gray">Понедельник</th>
             <th colspan="24" {% if day_of_week == 1 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Вторник</th>
             <th colspan="24" {% if day_of_week == 2 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Среда</th>
             <th colspan="24" {% if day_of_week == 3 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Четверг</th>
             <th colspan="24" {% if day_of_week == 4 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Пятница</th>
             <th colspan="24" {% if day_of_week == 5 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Суббота</th>
             <th colspan="24" {% if day_of_week == 6 %}class="graph-header-highlighted text_highlighted"{% endif %} style="width: 13%">Воскресенье</th>
-        </tr>
+    </tr>
     </thead>
     <tbody>
         {% for line in lines_week %}
