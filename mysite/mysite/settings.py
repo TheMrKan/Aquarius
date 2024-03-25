@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-wk*0f1sf(+!)dsh9()8ao+fon#mx=t$k6bty-rq!#txyuna-_('
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG")
@@ -85,18 +85,6 @@ DATABASES = {
     'default': env.db(),
 }
 
-"""DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'aquarius',
-        'USER': 'mrkan',
-        'PASSWORD': 'dflk984jguhgw4o7hg',
-        'HOST': 'localhost',
-        'PORT': '',
-    }
-}
-"""
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -152,8 +140,8 @@ ACCOUNT_ACTIVATION_DAYS = 1 # кол-во дней для хранения ко�
 AUTH_USER_EMAIL_UNIQUE = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = "hidevice63@gmail.com"
-EMAIL_HOST_PASSWORD = "qlipnqxstjwcpfzk"
+EMAIL_HOST_USER = os.environ.get("EMAIL_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 EMAIL_USE_TLS = True
 EMAIL_FROM = 'no-reply@hd.tlt.ru'
 
