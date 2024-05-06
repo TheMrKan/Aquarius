@@ -161,7 +161,8 @@ class ControllerV2Manager:
 
         self.is_user_connected = False
 
-        for channel_num in range(1, 31):
+        # 31 канал - это насос на 30-ти канальном контроллере
+        for channel_num in range(1, 32):
             try:
                 channel = Channel.objects.get(controller=self.data_model, number=channel_num)
             except ObjectDoesNotExist:
