@@ -49,7 +49,6 @@ class ControllerV2Manager:
     topic_log = "tele/Aquarius/SENSOR"
     topic_param = "tele/Aquarius/PARAM"
 
-    pump_channel_number = 10
     max_programs_for_channel = 14
 
     user: str
@@ -280,6 +279,10 @@ class ControllerV2Manager:
         return self.cmd_pattern.format(request_code=request_code, payload=payload,
                                        check_sum=self.get_check_sum(request_code, payload))
 
+    @property
+    def pump_channel_number(self):
+        return 10 if self.data_model.version < 200 else 31
+
     def get_pump_state(self) -> bool:
         """
         Если давление включения и выключения на канале насоса равны, то возвращает False
@@ -380,13 +383,13 @@ class ControllerV2Manager:
 
     def command_send_channel(self, chn):
         channel = Channel.objects.get(controller=self.data_model, number=chn)
+        volume_min = min(255, max(0, round(channel.volume_min)))
+        volume_max = min(255, max(0, round(channel.volume_max)))
         chn_settings = [channel.temp_min, channel.temp_max, channel.meandr_on, channel.meaoff_cmin, channel.meaoff_cmax,
-                        int(channel.press_on), int(channel.press_off), 0, 0,
+                        int(channel.press_on), int(channel.press_off), volume_min, volume_max,
                         channel.season, 0, 0, 0, int(channel.rainsens), channel.tempsens, 0, 0, 0, 0, 0]
         programs = Program.objects.filter(channel=channel)
-        print(chn_settings)
         prgs = []
-        print(channel, programs)
         for prg in programs:
             days = int(''.join([(str(int(str(i) in prg.days))) for i in range(1, 8)]), 2)
             prg_data = [days, prg.weeks, prg.hour, prg.minute, prg.t_min, prg.t_max]
@@ -449,12 +452,12 @@ class ControllerV2Manager:
                     channel_model.meaoff_cmax = c_properties[4]
                     channel_model.press_on = c_properties[5]
                     channel_model.press_off = c_properties[6]
+                    channel_model.volume_min = c_properties[7]
+                    channel_model.volume_max = c_properties[8]
                     channel_model.season = c_properties[9] if 0 <= c_properties[9] <= 200 else 100
                     channel_model.rainsens = bool(c_properties[13])
                     channel_model.tempsens = c_properties[14]
                     channel_model.lowlevel = bool(c_properties[15])
-
-                    print(self.stashed_data[offset:offset+20])
 
                     channel_model.save()
 
@@ -462,7 +465,6 @@ class ControllerV2Manager:
                 bytes_for_program = 8
                 for i in range(total_programs):
                     offset = bytes_for_program * i + 240
-                    print(offset)
                     print(f"Processing channel {self.stashed_data[offset]}; program {self.stashed_data[offset+1]}")
                     try:
                         if 255 in self.stashed_data[offset:offset+bytes_for_program]:
@@ -569,6 +571,8 @@ class ControllerV2Manager:
                     channel_model.meaoff_cmax = c_properties[4]
                     channel_model.press_on = c_properties[5]
                     channel_model.press_off = c_properties[6]
+                    channel_model.volume_min = c_properties[7]
+                    channel_model.volume_max = c_properties[8]
                     channel_model.season = c_properties[9] if 0 <= c_properties[9] <= 200 else 100
                     channel_model.rainsens = bool(c_properties[13])
                     channel_model.tempsens = c_properties[14]
