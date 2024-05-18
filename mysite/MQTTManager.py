@@ -99,9 +99,9 @@ class MQTTManager:
             port = int(port)
             m = MQTTManager(host, port, user, password, prefix)
             s = m.connect()
-            return m, True if s else None, m.incorrect_credentials
+            return (m, True) if s else (None, m.incorrect_credentials)
         except Exception as ex:
-            traceback.print_exc(ex)
+            traceback.print_exc()
             return None, False
 
 
