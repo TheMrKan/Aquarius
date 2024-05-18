@@ -2,6 +2,7 @@ from __future__ import annotations
 import datetime
 import time
 from bitstring import BitStream, BitArray
+import traceback
 
 import paho.mqtt.client as MQTT
 import random
@@ -98,9 +99,10 @@ class MQTTManager:
             port = int(port)
             m = MQTTManager(host, port, user, password, prefix)
             s = m.connect()
-            return m if s else None, m.incorrect_credentials
-        except:
-            return None
+            return m, True if s else None, m.incorrect_credentials
+        except Exception as ex:
+            traceback.print_exc(ex)
+            return None, False
 
 
 def test():
