@@ -75,6 +75,8 @@ class Channel(models.Model):
 
 
 class Program(models.Model):
+    WEEKS_CONVERTER = ((False, False), (False, True), (True, False), (True, True))
+
     id = models.AutoField(primary_key=True)
     channel = models.ForeignKey('Channel', on_delete=models.CASCADE)
     days = models.CharField(max_length=7, default='')
@@ -89,11 +91,7 @@ class Program(models.Model):
         constraints = []
 
     def get_weeks(self) -> list:
-        bin_weeks = bin(self.weeks)
-        output = [bool(int(i)) for i in list(bin_weeks[2:4])]
-        if len(output) < 2:
-            output += [False, ] * (2 - len(output))
-        return output
+        return Program.WEEKS_CONVERTER[self.weeks]
 
     def __str__(self):
         return f"{self.channel.controller.mqtt_user} / {self.channel.number} / ({self.days}|{self.hour}:{self.minute})"
