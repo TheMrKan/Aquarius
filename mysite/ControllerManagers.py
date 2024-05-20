@@ -78,28 +78,24 @@ class ControllerV2Manager:
 
     @staticmethod
     def get_instance(user: str, create: bool = True):
-        _filtered_controllers = Controller.objects.filter(mqtt_user=user)
-
         if user in ControllerV2Manager.instances.keys():
             return ControllerV2Manager.instances[user]
-        elif _filtered_controllers.exists() and create:
+        elif create:
+            _filtered_controllers = Controller.objects.filter(mqtt_user=user)
+            if not _filtered_controllers.exists():
+                raise KeyError(f"Controller '{user}' hasn't been added to the database")
             data_model = _filtered_controllers[0]
             if ControllerV2Manager.check_auth(data_model.mqtt_user, data_model.mqtt_password):
-                try:
-                    if ControllerV2Manager.add(data_model.mqtt_user, data_model.mqtt_password):
-                        return ControllerV2Manager.instances[user]
-                    else:
-                        return None
-                except IncorrectCredentialsException:
-                    return None
+                ControllerV2Manager.add(data_model.mqtt_user, data_model.mqtt_password)
+                return ControllerV2Manager.instances[user]
             else:
-                return None
+                raise IncorrectCredentialsException("Check_auth failed")
         else:
-            return None
+            return False
 
     @staticmethod
     def add(user: str, password: str, **kwargs):
-        if ControllerV2Manager.get_instance(user, False) is None:
+        if not ControllerV2Manager.get_instance(user, False):
             mqtt, ic = MQTTManager.try_connect(kwargs.get("host", ControllerV2Manager.DEFAULT_HOST),
                                            kwargs.get("port", ControllerV2Manager.DEFAULT_PORT),
                                            user,
@@ -127,7 +123,7 @@ class ControllerV2Manager:
                     cm.set_name(kwargs["cname"])
                 return True
             else:
-                return False
+                raise ConnectionError("No MQTT brokers available")
         else:
             return True
 

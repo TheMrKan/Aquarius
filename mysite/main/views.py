@@ -1,3 +1,5 @@
+import traceback
+
 import django.db.models
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
@@ -37,6 +39,9 @@ def index(request):
                         status_message = 1
                 except IncorrectCredentialsException:
                     status_message = 2
+                except Exception as ex:
+                    traceback.print_exc()
+                    status_message = 0
 
     response = render(request, 'index.html',
                     {
