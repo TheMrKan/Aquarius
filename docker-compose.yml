@@ -6,7 +6,7 @@ services:
     command: sh -c "./entrypoint.sh"
     volumes:
       - ./mysite:/mysite
-      - static_data:/mysite/static
+      - static_data:/static
     expose:
       - 8000
     environment:
