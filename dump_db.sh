@@ -1,0 +1,1 @@
+docker exec -t your-db-container pg_dumpall -c -U postgres | gzip > dump_`date +%Y-%m-%d"_"%H_%M_%S`.sql.gz
