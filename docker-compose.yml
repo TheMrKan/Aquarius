@@ -18,6 +18,8 @@ services:
       - IS_PRODUCTION=1
       - HOST_NAME=${HOST_NAME}
       - DJANGO_SECRET_KEY=%{DJANGO_SECRET_KEY}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
 
   db:
     image: postgres:13-alpine

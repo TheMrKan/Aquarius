@@ -11,10 +11,6 @@
 	<link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 
-<script>
-
-</script>
-
 <body>
 
 	<div class="wrapper">
@@ -24,7 +20,7 @@
 
 				<div class="page__head">
 					<div class="mhead">
-						<div class="mhead__title">Авторизация</Main></div>
+						<div class="mhead__title">Авторизация</div>
 						<a target="_blank" href="https://hi-garden.ru/aqua2-manual" class="mhead__manual xhref">&#8942;</a>		 
 				 	</div>
 				</div>
@@ -73,6 +69,13 @@
 										<a href="{% url 'django_registration_register' %}" class="titlew myxhref" style="text-decoration: underline;"><br>Регистрация</a>
 									</div>
 								</div>
+								<div class="status__row">
+									<div class="status__column">
+									</div>
+									<div class="status__column">
+										<a href="{% url 'password_reset' %}" class="titlew myxhref" style="text-decoration: underline;"><br>Забыл пароль</a>
+									</div>
+								</div>
 
 							</form>
 							
@@ -86,9 +89,5 @@
 			  	<div class="page__footer"></div>
 			</div>
 	</div>
-		<script type="text/javascript">
-			set_channels(0, false);
-			set_channels_status();
-		</script>
 </body>
 </html>
