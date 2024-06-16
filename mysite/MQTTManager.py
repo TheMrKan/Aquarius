@@ -106,7 +106,7 @@ class MQTTManager:
 
 
 def test():
-    manager = MQTTManager("hd.tlt.ru", 18883, "21E", "180690033", "21E/")
+    manager = MQTTManager("mqtt.hi-garden.ru", 18883, "21E", "180690033", "21E/")
     manager.connect()
 
 

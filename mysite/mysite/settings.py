@@ -29,7 +29,9 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(int(os.environ.get("DJANGO_DEBUG")))
 
-ALLOWED_HOSTS = ["192.168.137.1", "hd.tlt.ru", "127.0.0.1", "192.168.31.191", "*"]
+ALLOWED_HOSTS = [os.environ.get("HOST_NAME")]
+if DEBUG:
+    ALLOWED_HOSTS.append("*")
 
 # Application definition
 
@@ -147,6 +149,6 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 EMAIL_USE_TLS = True
 EMAIL_FROM = 'no-reply@hd.tlt.ru'
 
-CSRF_TRUSTED_ORIGINS = ["https://hd.tlt.ru"]
+CSRF_TRUSTED_ORIGINS = [f"https://{os.environ.get('HOST_NAME')}"]
 
 

@@ -32,8 +32,8 @@ class IncorrectCredentialsException(Exception):
 
 class ControllerV2Manager:
 
-    DEFAULT_HOST = "hg.tlt.ru"
-    DEFAULT_RESERVE_HOST = "hd.tlt.ru"
+    DEFAULT_HOST = "mqtt.hi-garden.ru"
+    DEFAULT_RESERVE_HOST = "mqtt.hi-device.ru"
     DEFAULT_PORT = "18883"
     DEFAULT_PREFIX_PATTERN = "{user}/"
     DEFAULT_NAME_PATTERN = "Контроллер {user}"
