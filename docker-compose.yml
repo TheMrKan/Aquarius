@@ -44,6 +44,8 @@ services:
       - ./nginx-conf.d:/etc/nginx/conf.d
       - ./certbot/www:/var/www/certbot/
       - ./certbot/conf/:/etc/nginx/ssl/
+    environment:
+      - HOST_NAME=${HOST_NAME}
 
   certbot:
     image: certbot/certbot:latest
