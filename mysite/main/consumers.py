@@ -1,7 +1,10 @@
 import json
+import logging
 
 import django.core.exceptions
 from channels.generic.websocket import WebsocketConsumer
+
+logger = logging.getLogger(__name__)
 
 
 class ControllerConsumer(WebsocketConsumer):
@@ -10,7 +13,7 @@ class ControllerConsumer(WebsocketConsumer):
     name = 'controller'
 
     def connect(self):
-        print("Accepted a new WebSocket connection")
+        logger.debug("Accepted a new WebSocket connection")
         self.accept()
 
     def disconnect(self, close_code):
@@ -21,7 +24,7 @@ class ControllerConsumer(WebsocketConsumer):
                 from ControllerManagers import ControllerV2Manager
                 m = ControllerV2Manager.get_instance(k)
                 if m is not None:
-                    print(f"WebSocket disconnected: {m.user}")
+                    logger.debug(f"WebSocket disconnected: {m.user}")
                     m.send_status(False)
 
                 to_delete.append(k)
@@ -31,9 +34,7 @@ class ControllerConsumer(WebsocketConsumer):
 
     @staticmethod
     def send_data_downloaded(prefix: str, error: str = ""):
-        print("send data downloaded")
         if prefix in ControllerConsumer.consumers.keys():
-            print("in consumers")
             ControllerConsumer.consumers[prefix].send(text_data=json.dumps({"type": "data_downloaded", "error": error}))
 
     @staticmethod
@@ -65,7 +66,7 @@ class ControllerConsumer(WebsocketConsumer):
 
         command = json_data["command"]
 
-        print(f"Received websocket command: {command}")
+        logger.debug(f"Received websocket command: {command}")
 
         instance = ControllerV2Manager.get_instance(mqtt_user)
         if instance is None:

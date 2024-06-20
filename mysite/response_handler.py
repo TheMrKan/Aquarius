@@ -1,8 +1,10 @@
 import abc
+import logging
 from abc import ABC, abstractmethod
 from typing import List, Dict, Callable
 import traceback
 
+logger = logging.getLogger(__name__)
 
 class PatternNotFoundError(Exception):
     pass
@@ -32,8 +34,8 @@ class DownloadingDataPattern(DataPattern):
         try:
             c = "1.2.3.4.3.2.1." in data and ".10.11.12.13.12.11.10" in data
             return c and data.startswith("*") and len(cls.get_content(data)) == 36
-        except:
-            traceback.print_exc()
+        except Exception as ex:
+            logger.error("An error occured in DownloadingDataPattern.match",  exc_info=ex)
             return False
 
     @classmethod
@@ -51,8 +53,8 @@ class PropertiesDataPattern(DataPattern):
             c = "1.2.3.4.3.2.1." in data and ".9.8.7.6.7.8.9" in data
             ln = len(cls.get_content(data))
             return c and not data.startswith("*") and (ln == 34 or ln == 36)
-        except:
-            traceback.print_exc()
+        except Exception as ex:
+            logger.error("An error occured in PropertiesDataPattern.match", exc_info=ex)
             return False
 
 

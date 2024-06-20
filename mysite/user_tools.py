@@ -1,4 +1,5 @@
 import json
+import logging
 
 import django.core.exceptions
 from main.models import User, UserControllerPreferences, Controller, UserExtension
@@ -6,6 +7,8 @@ from main.models import User, UserControllerPreferences, Controller, UserExtensi
 from typing import Dict, List, Union
 from dataclasses import dataclass
 from django.core.exceptions import ObjectDoesNotExist
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -66,7 +69,7 @@ def add_controller(user: User, mqtt_user: str, password: str, verbous_name: str)
                                                verbous_name=verbous_name)
         ucontprefs.save()
     except ObjectDoesNotExist:
-        print(f"Failed to add use rcontroller preferences: controller {mqtt_user} not found")
+        logger.error(f"Failed to add user controller preferences: controller {mqtt_user} not found")
 
 
 def remove_controller(user: User, mqtt_user: str):

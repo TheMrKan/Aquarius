@@ -1,3 +1,4 @@
+import logging
 import traceback
 
 import django.db.models
@@ -13,6 +14,8 @@ import json
 import user_tools as utools
 import dataclasses
 import main.conf as conf
+
+logger = logging.getLogger(__name__)
 
 DAYS = {'monday': 'Понедельник',
         'tuesday': 'Вторник',
@@ -40,7 +43,7 @@ def index(request):
                 except IncorrectCredentialsException:
                     status_message = 2
                 except Exception as ex:
-                    traceback.print_exc()
+                    logger.error("Failed to add new controller in the index view", exc_info=ex)
                     status_message = 0
 
     response = render(request, 'index.html',
@@ -195,7 +198,6 @@ def controller(request, mqtt_user):
     cont: Controller = Controller.objects.get(mqtt_user=mqtt_user)
     programs = Program.objects.filter(channel__controller__mqtt_user=mqtt_user)
     channels = cont.channels
-    print([(c.name, c.number) for c in channels])
 
     hide_humidity = cont.version < 200
     hide_channels_selector: bool = cont.version < 200
@@ -422,7 +424,6 @@ def channel(request, mqtt_user, chn, create_prg=False):
     if instance is not None:
         if request.method == 'POST':
             data = request.POST.dict()
-            print(data)
             chan.season = int(data["seasonpc"]) if data["seasonpc"].isdigit() else 100
             chan.temp_min = int(data["cmindeg"]) if data["cmindeg"] else chan.temp_min
             chan.temp_max = int(data["cmaxdeg"]) if data["cmaxdeg"] else chan.temp_max

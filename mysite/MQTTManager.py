@@ -1,11 +1,14 @@
 from __future__ import annotations
 import datetime
+import logging
 import time
 from bitstring import BitStream, BitArray
 import traceback
 
 import paho.mqtt.client as MQTT
 import random
+
+logger = logging.getLogger(__name__)
 
 def _int(i):
     try:
@@ -25,7 +28,7 @@ class MQTTManager:
     def send(self, topic, data, retain=False):
         if self.client is None:
             return
-        print(f"MQTT ({self.host}:{self.port}@{self.user}): Send to [{topic}]: {data}")
+        logger.debug(f"MQTT ({self.host}:{self.port}@{self.user}): Send to [{topic}]: {data}")
         self.client.publish(self.prefix + topic, data, retain=retain)
 
     def on_disconnect(self, *args):
@@ -47,9 +50,8 @@ class MQTTManager:
             self.trying -= 1
         else:
             return False
-        print(client, userdata, flags, rc)
         if rc == 0:
-            print(f'MQTT: Connected to {self.user}@{self.host}:{self.port}')
+            logger.info(f'MQTT: Connected to {self.user}@{self.host}:{self.port}')
             # from main.models import Controller, Channel, Program
             if self.onConnected is not None:
                 self.onConnected(self)
@@ -79,7 +81,7 @@ class MQTTManager:
 
 
     def on_message(self, userdata, message):
-        print(f'MQTT ({self.user}) - [{message.topic.replace(self.prefix, "")}] - {str(message.payload.decode("utf-8")).strip()}')
+        logger.debug(f'MQTT ({self.user}) - [{message.topic.replace(self.prefix, "")}] - {str(message.payload.decode("utf-8")).strip()}')
         if message.topic.replace(self.prefix, '') in self.topicHandlers.keys():
             #print("Handle:", str(message.payload.decode("utf-8")).strip())
             self.topicHandlers[message.topic.replace(self.prefix, "")](self, self.user, str(message.payload.decode("utf-8")).strip())
@@ -101,7 +103,7 @@ class MQTTManager:
             s = m.connect()
             return (m, False) if s else (None, m.incorrect_credentials)
         except Exception as ex:
-            traceback.print_exc()
+            logger.error("An error occured in try_connect", exc_info=ex)
             return None, False
 
 

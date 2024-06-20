@@ -7,6 +7,7 @@ services:
     volumes:
       - ./mysite:/mysite
       - static_data:/static
+      - logs:/logs
     expose:
       - 8000
     environment:
@@ -56,3 +57,4 @@ services:
 volumes:
   pg_data:
   static_data:
+  logs:

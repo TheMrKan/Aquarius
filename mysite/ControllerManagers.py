@@ -1,5 +1,3 @@
-import time
-
 from MQTTManager import MQTTManager
 from main.models import Controller, Channel, UserExtension, Program
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -14,6 +12,9 @@ import response_handler
 import traceback
 from threading import Thread
 import time
+
+import logging
+logger = logging.getLogger(__name__)
 
 def try_int(i):
     try:
@@ -199,7 +200,6 @@ class ControllerV2Manager:
         self.last_activity = datetime.datetime.now()
 
     def unload(self) -> None:
-        print(f"Unloading controller manager for {self.user}")
         self.send_status(False)
         if self.main_mqtt_manager is not None:
             self.main_mqtt_manager.disconnect()
@@ -228,7 +228,7 @@ class ControllerV2Manager:
             self.mark_as_not_connected()
 
     def handle_init_state_message(self, manager: MQTTManager, user: str, msg: str):
-        print(f"Received init status message from {manager.host}: {msg}")
+        logger.debug(f"Received init status message from {manager.host}: {msg}")
         if msg.isdigit() and int(msg):
             self.mqtt_manager = manager
             self.is_controller_connected = True
@@ -241,9 +241,8 @@ class ControllerV2Manager:
     def handle_param_message(self, manager: MQTTManager, user: str, msg: str):
         try:
             self.last_params = json.loads(msg)
-        except:
-            print("Failed to parse PARAM message")
-            traceback.print_exc()
+        except Exception as ex:
+            logger.error("Failed to parse PARAM message", exc_info=ex)
 
     def mark_as_not_connected(self):
         self.mqtt_manager = self.main_mqtt_manager or self.reserve_mqtt_manager
@@ -257,7 +256,7 @@ class ControllerV2Manager:
             self.last_command = request_code
             self.mqtt_manager.send(self.topic_send, msg)
         else:
-            print(f"Unable to send a message with request code {request_code} because controller instance is blocked")
+            logger.error(f"Unable to send a message with request code {request_code} because controller instance is blocked")
 
     def turn_off_all_channels(self):
         active_channels = Channel.objects.filter(controller__mqtt_user=self.user, state=True)
@@ -268,7 +267,6 @@ class ControllerV2Manager:
     def send_status(self, status: bool):
         self.update_last_activity()
 
-        print("Send status:", status)
         self.is_user_connected = status
         self.mqtt_manager.send(self.topic_send_status, str(int(status)), retain=True)
 
@@ -397,7 +395,6 @@ class ControllerV2Manager:
     def command_get_channels_response(self, content: List[int]) -> bool:
         bytes_in_packet = 35
         total_packets = 27
-        print("Content: ", content)
         try:
 
             parsed_message = content
@@ -416,14 +413,10 @@ class ControllerV2Manager:
             self.stashed_data += [0] * missed_bytes
             self.stashed_data += parsed_message
             self.packet = packet_number
-            print(f"Packet: {packet_number}")
             self.wrong_packets = 0
 
             if packet_number >= total_packets - 1:
-                [print(f"{n}: {i}") for n, i in enumerate(self.stashed_data)]
                 if len(self.stashed_data) != total_packets * bytes_in_packet:
-                    print("Invalid data")
-                    print("Error 2")
                     ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
                     self.packet = -1
                     self.stashed_data = []
@@ -462,31 +455,25 @@ class ControllerV2Manager:
                 bytes_for_program = 8
                 for i in range(total_programs):
                     offset = bytes_for_program * i + 240
-                    print(f"Processing channel {self.stashed_data[offset]}; program {self.stashed_data[offset+1]}")
+                    logger.debug(f"Processing channel {self.stashed_data[offset]}; program {self.stashed_data[offset+1]}")
                     try:
                         if 255 in self.stashed_data[offset:offset+bytes_for_program]:
-                            print("Skip empty program")
                             continue
                         channel_model: Channel = Channel.objects.get(controller=self.data_model, number=self.stashed_data[offset])
-                        print("Got channel model:", channel_model)
                         try:
                             program_model: Program = Program.objects.filter(channel=channel_model)[self.stashed_data[offset+1]]
-                            print("Program found in DB")
                         except ObjectDoesNotExist:
                             program_model: Program = Program(channel=channel_model)
-                            print(f"Program created because ObjectDoesNotExistsError with id {program_model.id}")
                         except IndexError:
                             program_model: Program = Program(channel=channel_model)
-                            print(f"Program created because IndexError with id {program_model.id}")
 
                         program_model.days = ''.join([str(num+1) for num, j in enumerate(list("{0:b}".format(self.stashed_data[offset + 2]))) if bool(int(j))])
                         program_model.weeks, program_model.hour, program_model.minute, program_model.t_min,\
                         program_model.t_max = self.stashed_data[offset+3:offset+8]
 
                         program_model.save()
-                        print(f"Program saved with properties: id = {program_model.id}; days = {program_model.days}; weeks = {program_model.weeks}")
-                    except Exception as ex1:
-                        traceback.print_exc()
+                    except Exception as ex:
+                        logger.error("An error occured while parsing program", exc_info=ex)
                         continue
                 ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user)
                 self.packet = -1
@@ -496,7 +483,7 @@ class ControllerV2Manager:
                 self.command_get_state()
                 return True
         except Exception as ex:
-            traceback.print_exc()
+            logger.error("An error ocured in command_get_channels_response", exc_info=ex)
             self.packet = -1
             self.stashed_data = []
             self.blocked = False
@@ -507,7 +494,6 @@ class ControllerV2Manager:
     def command_get_30_channels_response(self, content: List[int]) -> bool:
         bytes_in_packet = 35
         total_packets = 75
-        print("30 chns content: ", content)
 
         try:
 
@@ -516,7 +502,7 @@ class ControllerV2Manager:
             packet_number = parsed_message[0]
 
             del parsed_message[0]
-            print(packet_number, self.packet + 1, len(parsed_message))
+
             if packet_number != self.packet + 1 or len(parsed_message) != bytes_in_packet:
                 self.packet = -1
                 self.stashed_data = []
@@ -534,14 +520,10 @@ class ControllerV2Manager:
             self.stashed_data += [0] * missed_bytes
             self.stashed_data += parsed_message
             self.packet = packet_number
-            print(f"Packet: {packet_number}")
             self.wrong_packets = 0
 
             if packet_number >= total_packets - 1:
-                [print(f"{n}: {i}") for n, i in enumerate(self.stashed_data)]
                 if len(self.stashed_data) != total_packets * bytes_in_packet:
-                    print("Invalid data")
-                    print("Error 2")
                     ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user, "ERROR")
                     self.packet = -1
                     self.stashed_data = []
@@ -575,40 +557,31 @@ class ControllerV2Manager:
                     channel_model.tempsens = c_properties[14]
                     channel_model.lowlevel = bool(c_properties[15])
 
-                    print(self.stashed_data[offset:offset+20])
-
                     channel_model.save()
 
                 total_programs = 200
                 bytes_for_program = 8
                 for i in range(total_programs):
                     offset = bytes_for_program * i + 640
-                    print(offset)
-                    print(f"Processing channel {self.stashed_data[offset]}; program {self.stashed_data[offset+1]}")
+                    logger.debug(f"Processing channel {self.stashed_data[offset]}; program {self.stashed_data[offset+1]}")
                     try:
                         if 255 in self.stashed_data[offset:offset+bytes_for_program] or self.stashed_data[offset] == 0:
-                            print("Skip empty program")
                             continue
                         channel_model: Channel = Channel.objects.get(controller=self.data_model, number=self.stashed_data[offset])
-                        print("Got channel model:", channel_model)
                         try:
                             program_model: Program = Program.objects.filter(channel=channel_model)[self.stashed_data[offset+1]]
-                            print("Program found in DB")
                         except ObjectDoesNotExist:
                             program_model: Program = Program(channel=channel_model)
-                            print(f"Program created because ObjectDoesNotExistsError with id {program_model.id}")
                         except IndexError:
                             program_model: Program = Program(channel=channel_model)
-                            print(f"Program created because IndexError with id {program_model.id}")
 
                         program_model.days = ''.join([str(num+1) for num, j in enumerate(list("{0:b}".format(self.stashed_data[offset + 2]))) if bool(int(j))])
                         program_model.weeks, program_model.hour, program_model.minute, program_model.t_min,\
                         program_model.t_max = self.stashed_data[offset+3:offset+8]
 
                         program_model.save()
-                        print(f"Program saved with properties: id = {program_model.id}; days = {program_model.days}; weeks = {program_model.weeks}")
-                    except Exception as ex1:
-                        traceback.print_exc()
+                    except Exception as ex:
+                        logger.error("An error occured while parsing program", exc_info=ex)
                         continue
                 ControllerConsumer.send_data_downloaded(self.data_model.mqtt_user)
                 self.packet = -1
@@ -618,7 +591,7 @@ class ControllerV2Manager:
                 self.command_get_state()
                 return True
         except Exception as ex:
-            traceback.print_exc()
+            logger.error("An error occured in command_get_30_channels_response", exc_info=ex)
             self.packet = -1
             self.stashed_data = []
             self.blocked = False
@@ -665,7 +638,6 @@ class ControllerV2Manager:
 
 
     def command_get_state(self) -> None:
-        print("Sending get_state command to MQTT...")
         self.send_command("8.8.8.8.8.8.8.8")
 
     def command_set_time(self, year, month, day, hour, minute, second):
@@ -759,7 +731,7 @@ class ControllerV2Manager:
 
             return False
         except Exception as ex:
-            traceback.print_exc()
+            logger.error("An error occured in command_get_state_response")
             return False
 
     def get_remote_blocks(self) -> Tuple:

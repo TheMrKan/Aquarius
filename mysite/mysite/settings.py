@@ -85,6 +85,55 @@ DATABASES = {
     'default': env.db(),
 }
 
+LOG_LEVEL = 'INFO'
+if os.environ.get('LOG_LEVEL') is not None:
+    LOG_LEVEL = os.environ.get('LOG_LEVEL')
+
+MQTT_LOG_LEVEL = 'INFO'
+if os.environ.get('MQTT_LOG_LEVEL') is not None:
+    MQTT_LOG_LEVEL = os.environ.get('MQTT_LOG_LEVEL')
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "formatter": {
+            "format": "[%(asctime)s %(levelname)s][%(module)s] %(message)s"
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "formatter",
+        },
+        "file": {
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "when": "midnight",
+            "encoding": "utf-8",
+            "backupCount": 7,
+            "filename": "/logs/django_log.log" if bool(int(os.environ.get("IS_PRODUCTION"))) else BASE_DIR.parent / "logs" / "django_log.log",
+            ".": {
+                "suffix": "%Y-%m-%d_%H-%M-%S.log"
+            },
+            "formatter": "formatter"
+        }
+    },
+    "root": {
+        "handlers": ["console", "file"],
+        "level": LOG_LEVEL,
+        "propagate": True,
+    },
+    "loggers": {
+        "MQTTManager": {
+            "handlers": ["console", "file"],
+            "level": MQTT_LOG_LEVEL,
+            "propagate": False
+        }
+    }
+
+}
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
