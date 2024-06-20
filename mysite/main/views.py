@@ -185,38 +185,6 @@ def controller(request, mqtt_user):
     if not utools.is_authentificated(request.user, mqtt_user):
         return redirect("/")
 
-
-    def get_day(start, l):
-        out = []
-        for i in range(24):
-            if start <= i < (start + l):
-                out.append(1)
-            else:
-                out.append(0)
-        return out
-
-    def get_h_len(t_max):
-        l = t_max // 60
-        if t_max % 60 > 0:
-            l += 1
-        return l
-
-    def get_week(chn):
-        prgs = Program.objects.filter(channel=chn)
-        out = []
-        for i in range(7):
-            out.append([])
-            for j in range(24):
-                out[i].append(0)
-        for p in prgs:
-            days = list(p.days)
-            for d in days:
-                for i, h in enumerate(get_day(p.hour, get_h_len(p.t_max))):
-                    if out[int(d) - 1][i] == 0:
-                        out[int(d) - 1][i] += h
-
-        return out
-
     instance = ControllerV2Manager.get_instance(mqtt_user)
 
     if request.method == "POST":
@@ -234,25 +202,14 @@ def controller(request, mqtt_user):
     hidden_channel: str = "" if not hide_channels_selector or not instance.get_pump_state() \
         else str(instance.pump_channel_number)
 
-    class Line:
-        def __init__(self, name, status, data):
-            self.status = status
-            self.name = name
-            self.data = data
-
-    lines = []
-    for chn in channels:
-        lines.append(Line(chn.name, chn.state, get_week(chn)))
-
     day = list(DAYS.values())[cont.day - 1] if cont.day <= len(DAYS) else "Ошибка"
     return render(request, 'controller.html',
                   {
                       'mqtt_user': mqtt_user,
-                      'lines_week': lines,
                       'cont': cont,
                       'day': day,
-                      'channels_state_json': json.dumps([i.status for i in lines]),
-                      'channels_names_json': json.dumps([i.name for i in lines]),
+                      'channels_state_json': json.dumps([chn.state for chn in channels]),
+                      'channels_names_json': json.dumps([chn.name for chn in channels]),
                       "hide_channels_selector": hide_channels_selector,
                       "hide_humidity": hide_humidity,
                       "hidden_channel": hidden_channel,
