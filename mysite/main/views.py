@@ -14,7 +14,7 @@ import json
 import user_tools as utools
 import dataclasses
 import main.conf as conf
-from mysite.main.utils import controller_instance_required, ensure_not_blocked
+from main.utils import controller_instance_required, ensure_not_blocked
 
 logger = logging.getLogger(__name__)
 

@@ -2,10 +2,10 @@ from typing import Callable
 import logging
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
-import mysite.user_tools as user_tools
+import user_tools as user_tools
 from django.core.handlers.asgi import ASGIRequest
 from functools import wraps
-from mysite.ControllerManagers import ControllerV2Manager, IncorrectCredentialsException
+from ControllerManagers import ControllerV2Manager, IncorrectCredentialsException
 
 logger = logging.getLogger(__name__)
 
