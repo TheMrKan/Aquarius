@@ -111,7 +111,7 @@ LOGGING = {
             "when": "midnight",
             "encoding": "utf-8",
             "backupCount": 7,
-            "filename": "/logs/django_log.log" if bool(int(os.environ.get("IS_PRODUCTION"))) else BASE_DIR.parent / "logs" / "django_log.log",
+            "filename": "/logs/django_log.log" if bool(int(os.environ.get("IS_PRODUCTION") or 0)) else BASE_DIR.parent / "logs" / "django_log.log",
             ".": {
                 "suffix": "%Y-%m-%d_%H-%M-%S.log"
             },
@@ -176,7 +176,10 @@ STATICFILES_DIRS = [
     BASE_DIR / "static"
 ]
 
-STATIC_ROOT = "/static"
+if bool(int(os.environ.get("IS_PRODUCTION") or 0)):
+    STATIC_ROOT = "/static"
+else:
+    STATIC_ROOT = BASE_DIR.parent / "static"
 
 
 # Default primary key field type

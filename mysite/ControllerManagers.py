@@ -70,12 +70,8 @@ class ControllerV2Manager:
     last_params: Dict[str, Any]
     last_activity: datetime.datetime
 
-    @staticmethod
-    def check_block(user: str):
-        c = ControllerV2Manager.get_instance(user, False)
-        if c is None:
-            return True
-        return c.blocked
+    def check_block(self):
+        return self.blocked
 
     @staticmethod
     def get_instance(user: str, create: bool = True):
@@ -172,6 +168,7 @@ class ControllerV2Manager:
         self.update_last_activity()
 
         thread = Thread(target=self.activity_checker)
+        thread.daemon = True
         thread.start()
 
         self.mqtt_manager = None
@@ -772,6 +769,12 @@ class ControllerV2Manager:
         st = try_int(data)
         self.data_model.status = int(bool(st))
         self.data_model.save()
+
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        return self.user
 
 
 # регистрируем обработчики для паттернов данных
