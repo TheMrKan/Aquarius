@@ -6,6 +6,13 @@ import traceback
 
 logger = logging.getLogger(__name__)
 
+
+def try_int(i):
+    try:
+        return int(i)
+    except:
+        return 0
+
 class PatternNotFoundError(Exception):
     pass
 
@@ -24,7 +31,7 @@ class DataPattern(ABC):
     def get_content(cls, data: str) -> List[int]:
         data = data.split("1.2.3.4.3.2.1.")[1]
         data = data.split(".9.8.7.6.7.8.9")[0]
-        return list(map(int, data.split(".")))
+        return list(map(try_int, data.split(".")))
 
 
 class DownloadingDataPattern(DataPattern):
@@ -42,7 +49,7 @@ class DownloadingDataPattern(DataPattern):
     def get_content(cls, data: str) -> List[int]:
         data = data.split("1.2.3.4.3.2.1.")[1]
         data = data.split(".10.11.12.13.12.11.10")[0]
-        return list(map(int, data.split(".")))
+        return list(map(try_int, data.split(".")))
 
 
 class PropertiesDataPattern(DataPattern):

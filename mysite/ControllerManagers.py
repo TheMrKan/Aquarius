@@ -92,7 +92,7 @@ class ControllerV2Manager:
             else:
                 raise IncorrectCredentialsException("Check_auth failed")
         else:
-            return False
+            return None
 
     @staticmethod
     def add(user: str, password: str, **kwargs):
