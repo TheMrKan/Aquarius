@@ -23,6 +23,10 @@ def try_int(i):
         return 0
 
 
+def int_to_bit_array(num: int):
+    return [digit == '1' for digit in bin(num)[2:][::-1]]
+
+
 class LimitOfProgramsException(Exception):
     pass
 
@@ -284,7 +288,7 @@ class ControllerV2Manager:
         pump_channel: Channel = Channel.objects.get(controller=self.data_model, number=self.pump_channel_number)
         return pump_channel.press_on != pump_channel.press_off
 
-    def get_pump_settings(self) -> Tuple[float]:
+    def get_pump_settings(self) -> Tuple[float, float, float, float]:
         """
         Возвращает настройки насоса
         :return:
@@ -383,7 +387,9 @@ class ControllerV2Manager:
         programs = Program.objects.filter(channel=channel)
         prgs = []
         for prg in programs:
-            days = int(''.join([(str(int(str(i) in prg.days))) for i in range(1, 8)]), 2)
+            day_bits = [int((str(i) in prg.days)) for i in range(1, 8)][::-1]
+            days = int(''.join(map(str, day_bits)), 2)
+
             prg_data = [days, prg.weeks, prg.hour, prg.minute, prg.t_min, prg.t_max]
             prgs.append(".".join([str(i) for i in prg_data]))
         str_data = ".".join([str(i) for i in chn_settings]) + "." + ".".join([str(i) for i in prgs])
@@ -464,7 +470,11 @@ class ControllerV2Manager:
                         except IndexError:
                             program_model: Program = Program(channel=channel_model)
 
-                        program_model.days = ''.join([str(num+1) for num, j in enumerate(list("{0:b}".format(self.stashed_data[offset + 2]))) if bool(int(j))])
+                        day_flags = int_to_bit_array(self.stashed_data[offset + 2])
+                        day_numbers = [str(num + 1) for num, enabled in enumerate(day_flags) if enabled]
+                        program_model.days = "".join(day_numbers)
+                        logger.debug("Program: %s - %s - %s. Days raw: %s; Day numbers: %s; Result: %s;", self.user, channel_model.number, i, self.stashed_data[offset + 2], day_numbers, program_model.days)
+
                         program_model.weeks, program_model.hour, program_model.minute, program_model.t_min,\
                         program_model.t_max = self.stashed_data[offset+3:offset+8]
 
@@ -572,7 +582,10 @@ class ControllerV2Manager:
                         except IndexError:
                             program_model: Program = Program(channel=channel_model)
 
-                        program_model.days = ''.join([str(num+1) for num, j in enumerate(list("{0:b}".format(self.stashed_data[offset + 2]))) if bool(int(j))])
+                        day_flags = int_to_bit_array(self.stashed_data[offset + 2])
+                        day_numbers = [str(num + 1) for num, enabled in enumerate(day_flags) if enabled]
+                        program_model.days = "".join(day_numbers)
+
                         program_model.weeks, program_model.hour, program_model.minute, program_model.t_min,\
                         program_model.t_max = self.stashed_data[offset+3:offset+8]
 
