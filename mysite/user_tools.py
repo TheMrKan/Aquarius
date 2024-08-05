@@ -40,8 +40,9 @@ def get_available_controllers(user: User) -> List[AvailableController]:
         if cdata.mqtt_password == cdata.controller.mqtt_password:
             available_controllers.append(AvailableController(cdata.controller.mqtt_user, cdata.verbous_name, cdata.controller.mqtt_password))
         else:
+            mqtt_user = cdata.controller.mqtt_user
             cdata.delete()
-            logger.info("Deleted saved controller '%s' for user '%s' because of password mismatch")
+            logger.info("Deleted saved controller '%s' for user '%s' because of password mismatch", mqtt_user, user.username)
 
     return available_controllers
 

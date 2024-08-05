@@ -141,6 +141,9 @@ class ControllerV2Manager:
 
         try:
             self.data_model = Controller.objects.get(mqtt_user=controller_user)
+            if self.data_model.mqtt_password != password:
+                self.data_model.mqtt_password = password
+                self.data_model.save()
         except ObjectDoesNotExist:
             self.data_model = Controller(mqtt_user=controller_user,
                                          mqtt_password=password,
