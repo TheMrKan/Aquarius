@@ -28,6 +28,7 @@ def get_available_controllers(user: User) -> List[AvailableController]:
     try:
         saved_controllers: List[UserControllerPreferences] = user.userextension.usercontrollerpreferences_set.all()
     except ObjectDoesNotExist:
+        logger.info("User extension for user '%s' not found. Creating...", user.username)
         userextension = UserExtension(user=user)
         userextension.save()
         return []
@@ -40,17 +41,19 @@ def get_available_controllers(user: User) -> List[AvailableController]:
             available_controllers.append(AvailableController(cdata.controller.mqtt_user, cdata.verbous_name, cdata.controller.mqtt_password))
         else:
             cdata.delete()
+            logger.info("Deleted saved controller '%s' for user '%s' because of password mismatch")
 
     return available_controllers
 
 
 def add_controller(user: User, mqtt_user: str, password: str, verbous_name: str):
+    logger.debug("Adding controller '%s' for user '%s'", mqtt_user, user.username)
     try:
         saved_controllers: List[UserControllerPreferences] = user.userextension.usercontrollerpreferences_set.all()
     except ObjectDoesNotExist:
+        logger.info("User extension for user '%s' not found. Creating...", user.username)
         userextension = UserExtension(user=user)
         userextension.save()
-
         saved_controllers = []
 
     for cdata in saved_controllers:
@@ -58,6 +61,7 @@ def add_controller(user: User, mqtt_user: str, password: str, verbous_name: str)
             cdata.mqtt_password = password
             cdata.verbous_name = verbous_name
             cdata.save()
+            logger.info("Found existing saved controller '%s' for user '%s'. Updating... ", mqtt_user, user.username)
             return
 
     try:
@@ -68,6 +72,7 @@ def add_controller(user: User, mqtt_user: str, password: str, verbous_name: str)
                                                mqtt_password=password,
                                                verbous_name=verbous_name)
         ucontprefs.save()
+        logger.info("Added controller preferences '%s' for user '%s'", mqtt_user, user.username)
     except ObjectDoesNotExist:
         logger.error(f"Failed to add user controller preferences: controller {mqtt_user} not found")
 
