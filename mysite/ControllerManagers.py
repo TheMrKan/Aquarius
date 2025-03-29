@@ -258,8 +258,10 @@ class ControllerV2Manager:
         if not self.blocked:
             msg = self.wrap_command(request_code, payload)
             self.last_command = request_code
-            self.main_mqtt_manager.send(self.topic_send, msg)
-            self.reserve_mqtt_manager.send(self.topic_send, msg)
+            if self.main_mqtt_manager:
+                self.main_mqtt_manager.send(self.topic_send, msg)
+            if self.reserve_mqtt_manager:
+                self.reserve_mqtt_manager.send(self.topic_send, msg)
         else:
             logger.error(f"Unable to send a message with request code {request_code} because controller instance is blocked")
 
@@ -273,8 +275,10 @@ class ControllerV2Manager:
         self.update_last_activity()
 
         self.is_user_connected = status
-        self.main_mqtt_manager.send(self.topic_send_status, str(int(status)), retain=True)
-        self.reserve_mqtt_manager.send(self.topic_send_status, str(int(status)), retain=True)
+        if self.main_mqtt_manager:
+            self.main_mqtt_manager.send(self.topic_send_status, str(int(status)), retain=True)
+        if self.reserve_mqtt_manager:
+            self.reserve_mqtt_manager.send(self.topic_send_status, str(int(status)), retain=True)
 
     def wrap_command(self, request_code: str, payload: str) -> str:
         return self.cmd_pattern.format(request_code=request_code, payload=payload,
