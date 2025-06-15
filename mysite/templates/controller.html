@@ -465,7 +465,12 @@
 
 							<div class="status__column">
 								<div class="imgsm">
-									<img src="{% static 'img/measure.png' %}" width="80%"  alt="">
+                                    {% if cont.rain %}
+                                        <img src="{% static 'img/rain.png' %}" width="80%" alt="">
+                                    {% else %}
+                                        <img src="{% static 'img/measure.png' %}" width="80%" alt="">
+                                    {% endif %}
+
 								</div>
 								<div class="titlew" id="temp_div">Загрузка...</div>
 							</div>
