@@ -26,6 +26,7 @@
 	var paused = false;
 	var hidden_channel = "{{ hidden_channel }}";
 	var blocked = false;
+    let prev_rain_status = null;
 
 	var time_sync_canceled = false;
 
@@ -126,6 +127,12 @@
 			set_channels();
 			set_channels_status();
 		}
+
+        if (prev_rain_status !== properties["rain"]) {
+            const weatherIcon = properties["rain"] ? "{% static 'img/rain.png' %}" : "{% static 'img/measure.png' %}";
+            document.getElementById("weather_icon").src = weatherIcon;
+            prev_rain_status = properties["rain"];
+        }
 
 		if (hidden_channel == "" & {% if hide_channels_selector %}true{% else %}false{% endif %})
 		{
@@ -465,12 +472,7 @@
 
 							<div class="status__column">
 								<div class="imgsm">
-                                    {% if cont.rain %}
-                                        <img src="{% static 'img/rain.png' %}" width="80%" alt="">
-                                    {% else %}
-                                        <img src="{% static 'img/measure.png' %}" width="80%" alt="">
-                                    {% endif %}
-
+                                    <img id="weather_icon" src="{% static 'img/measure.png' %}" width="80%" alt="">
 								</div>
 								<div class="titlew" id="temp_div">Загрузка...</div>
 							</div>
